@@ -31,3 +31,10 @@ build/
 
 ### VS Code ###
 .vscode/
+target
+.git
+.gitignore
+Dockerfile
+Dockerfile.dev
+*.iml
+.idea

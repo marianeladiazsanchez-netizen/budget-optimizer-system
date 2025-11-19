@@ -10,13 +10,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
  * Servicio de lógica de negocio para gestión de usuarios
- * ADAPTADO A LOS MODELOS EXISTENTES (sin modificarlos)
  */
 @Service
 @RequiredArgsConstructor
@@ -34,11 +32,6 @@ public class UsuarioService {
     
     /**
      * Registra un nuevo usuario en el sistema
-     * 
-     * @param dto Datos del usuario a registrar
-     * @return Usuario creado con su cuenta asociada
-     * @throws EmailYaRegistradoException si el email ya existe
-     * @throws GeolocalizacionException si no se pueden obtener coordenadas
      */
     public UsuarioResponseDTO registrarUsuario(RegistroUsuarioDTO dto) {
         log.info("Iniciando registro de usuario con email: {}", dto.getEmail());
@@ -56,30 +49,34 @@ public class UsuarioService {
             log.info("Coordenadas obtenidas: lat={}, lng={}", 
                 ubicacion.getLatitud(), ubicacion.getLongitud());
         } catch (Exception e) {
-            log.error("Error obteniendo coordenadas para {}, {}", dto.getCiudad(), dto.getPais(), e);
+            log.error("Error obteniendo coordenadas para {}, {}", 
+                dto.getCiudad(), dto.getPais(), e);
             throw new GeolocalizacionException(dto.getCiudad(), dto.getPais());
         }
         
-        // 3. Crear usuario (usando campos que SÍ existen en el modelo)
-        Usuario usuario = new Usuario();
-        usuario.setNombre(dto.getNombre());
-        usuario.setEmail(dto.getEmail());
-        usuario.setPassword(dto.getPassword()); // TODO: Encriptar con BCrypt cuando tengamos Security
-        usuario.setUbicacion(ubicacion);
-        usuario.setPresupuestoMensualBase(dto.getPresupuestoMensualBase());
-        usuario.setAccountType(AccountType.USER); // Por defecto cuenta básica
-        usuario.setActivo(true);
-        // fechaCreacion se asigna automáticamente con @CreationTimestamp
+        // 3. Crear usuario con Builder
+        Usuario usuario = Usuario.builder()
+            .nombre(dto.getNombre())
+            .email(dto.getEmail())
+            .password(dto.getPassword()) // TODO: Encriptar con BCrypt
+            .telefono(dto.getTelefono())
+            .ubicacion(ubicacion)
+            .ciudad(dto.getCiudad())
+            .pais(dto.getPais())
+            .presupuestoMensualBase(dto.getPresupuestoMensualBase())
+            .accountType(AccountType.USER)
+            .activo(true)
+            .transaccionesMesActual(0)
+            .build();
         
         usuario = usuarioRepo.save(usuario);
         log.info("Usuario creado con ID: {}", usuario.getId());
         
-        // 4. Crear cuenta asociada (usando campos que SÍ existen)
+        // 4. Crear cuenta asociada
         Cuenta cuenta = new Cuenta();
         cuenta.setUsuario(usuario);
         cuenta.setTipoCuenta(AccountType.USER);
         cuenta.setSaldo(0.0);
-        // fechaCreacion se asigna automáticamente con @CreationTimestamp
         
         cuentaRepo.save(cuenta);
         log.info("Cuenta creada para usuario ID: {}", usuario.getId());
@@ -91,13 +88,6 @@ public class UsuarioService {
     // CONSULTAS Y BÚSQUEDAS
     // ==========================================
     
-    /**
-     * Busca un usuario por su ID
-     * 
-     * @param id ID del usuario
-     * @return Usuario encontrado
-     * @throws UsuarioNoEncontradoException si no existe
-     */
     @Transactional(readOnly = true)
     public UsuarioResponseDTO buscarPorId(Long id) {
         log.info("Buscando usuario con ID: {}", id);
@@ -108,13 +98,6 @@ public class UsuarioService {
         return convertirAResponse(usuario);
     }
     
-    /**
-     * Busca un usuario por su email
-     * 
-     * @param email Email del usuario
-     * @return Usuario encontrado
-     * @throws UsuarioNoEncontradoException si no existe
-     */
     @Transactional(readOnly = true)
     public UsuarioResponseDTO buscarPorEmail(String email) {
         log.info("Buscando usuario con email: {}", email);
@@ -125,11 +108,6 @@ public class UsuarioService {
         return convertirAResponse(usuario);
     }
     
-    /**
-     * Lista todos los usuarios activos
-     * 
-     * @return Lista de usuarios
-     */
     @Transactional(readOnly = true)
     public List<UsuarioResponseDTO> listarTodos() {
         log.info("Listando todos los usuarios activos");
@@ -140,12 +118,6 @@ public class UsuarioService {
             .collect(Collectors.toList());
     }
     
-    /**
-     * Lista usuarios por tipo de cuenta
-     * 
-     * @param accountType Tipo de cuenta
-     * @return Lista de usuarios
-     */
     @Transactional(readOnly = true)
     public List<UsuarioResponseDTO> listarPorTipoCuenta(AccountType accountType) {
         log.info("Listando usuarios con tipo de cuenta: {}", accountType);
@@ -156,17 +128,10 @@ public class UsuarioService {
             .collect(Collectors.toList());
     }
     
-    /**
-     * Busca usuarios cercanos a una ubicación
-     * 
-     * @param latitud Latitud del punto de referencia
-     * @param longitud Longitud del punto de referencia
-     * @param radioKm Radio de búsqueda en kilómetros
-     * @return Lista de usuarios cercanos
-     */
     @Transactional(readOnly = true)
     public List<UsuarioResponseDTO> buscarCercanos(double latitud, double longitud, double radioKm) {
-        log.info("Buscando usuarios en radio de {}km desde lat={}, lng={}", radioKm, latitud, longitud);
+        log.info("Buscando usuarios en radio de {}km desde lat={}, lng={}", 
+            radioKm, latitud, longitud);
         
         return usuarioRepo.findUsuariosCercanos(latitud, longitud, radioKm)
             .stream()
@@ -178,23 +143,19 @@ public class UsuarioService {
     // ACTUALIZACIÓN
     // ==========================================
     
-    /**
-     * Actualiza los datos de un usuario
-     * 
-     * @param id ID del usuario
-     * @param dto Datos a actualizar
-     * @return Usuario actualizado
-     * @throws UsuarioNoEncontradoException si no existe
-     */
     public UsuarioResponseDTO actualizarUsuario(Long id, ActualizarUsuarioDTO dto) {
         log.info("Actualizando usuario con ID: {}", id);
         
         Usuario usuario = usuarioRepo.findById(id)
             .orElseThrow(() -> new UsuarioNoEncontradoException(id));
         
-        // Actualizar solo los campos que vengan (todos son opcionales)
+        // Actualizar solo los campos que vengan
         if (dto.getNombre() != null) {
             usuario.setNombre(dto.getNombre());
+        }
+        
+        if (dto.getTelefono() != null) {
+            usuario.setTelefono(dto.getTelefono());
         }
         
         if (dto.getPresupuestoMensualBase() != null) {
@@ -209,6 +170,9 @@ public class UsuarioService {
                     dto.getPais()
                 );
                 usuario.setUbicacion(nuevaUbicacion);
+                usuario.setCiudad(dto.getCiudad());
+                usuario.setPais(dto.getPais());
+                
                 log.info("Ubicación actualizada: lat={}, lng={}", 
                     nuevaUbicacion.getLatitud(), nuevaUbicacion.getLongitud());
             } catch (Exception e) {
@@ -223,62 +187,42 @@ public class UsuarioService {
         return convertirAResponse(usuario);
     }
     
-    /**
-     * Cambia la contraseña de un usuario
-     * 
-     * @param id ID del usuario
-     * @param dto Datos del cambio de contraseña
-     * @throws UsuarioNoEncontradoException si no existe
-     * @throws PasswordIncorrectaException si la contraseña actual es incorrecta
-     * @throws IllegalArgumentException si las contraseñas no coinciden
-     */
     public void cambiarPassword(Long id, CambiarPasswordDTO dto) {
         log.info("Cambiando contraseña para usuario ID: {}", id);
         
         Usuario usuario = usuarioRepo.findById(id)
             .orElseThrow(() -> new UsuarioNoEncontradoException(id));
         
-        // Validar contraseña actual (TODO: Usar BCrypt cuando tengamos Security)
+        // TODO: Usar BCrypt para comparar
         if (!usuario.getPassword().equals(dto.getPasswordActual())) {
             log.error("Contraseña actual incorrecta para usuario ID: {}", id);
             throw new PasswordIncorrectaException();
         }
         
-        // Validar que las contraseñas nuevas coincidan
         if (!dto.getPasswordNueva().equals(dto.getPasswordConfirmacion())) {
             throw new IllegalArgumentException("Las contraseñas nuevas no coinciden");
         }
         
-        // Actualizar contraseña (TODO: Encriptar)
+        // TODO: Encriptar con BCrypt
         usuario.setPassword(dto.getPasswordNueva());
         usuarioRepo.save(usuario);
         
         log.info("Contraseña actualizada para usuario ID: {}", id);
     }
     
-    /**
-     * Upgrade de cuenta de usuario
-     * 
-     * @param id ID del usuario
-     * @param nuevoTipo Nuevo tipo de cuenta
-     * @return Usuario con cuenta actualizada
-     * @throws UsuarioNoEncontradoException si no existe
-     * @throws IllegalArgumentException si el nuevo tipo no es superior
-     */
     public UsuarioResponseDTO upgradeCuenta(Long id, AccountType nuevoTipo) {
         log.info("Upgrade de cuenta para usuario ID: {} a tipo: {}", id, nuevoTipo);
         
         Usuario usuario = usuarioRepo.findById(id)
             .orElseThrow(() -> new UsuarioNoEncontradoException(id));
         
-        // Validar que sea un upgrade
         if (!nuevoTipo.esSuperiorA(usuario.getAccountType())) {
             throw new IllegalArgumentException(
                 "El nuevo tipo de cuenta debe ser superior al actual"
             );
         }
         
-        usuario.setAccountType(nuevoTipo);
+        usuario.upgradeCuenta(nuevoTipo);
         
         // Actualizar también la cuenta asociada
         Cuenta cuenta = cuentaRepo.findByUsuarioId(id)
@@ -296,11 +240,6 @@ public class UsuarioService {
     // DESACTIVACIÓN Y ELIMINACIÓN
     // ==========================================
     
-    /**
-     * Desactiva un usuario (soft delete)
-     * 
-     * @param id ID del usuario
-     */
     public void desactivarUsuario(Long id) {
         log.info("Desactivando usuario ID: {}", id);
         
@@ -313,11 +252,6 @@ public class UsuarioService {
         log.info("Usuario desactivado: ID={}", id);
     }
     
-    /**
-     * Reactiva un usuario desactivado
-     * 
-     * @param id ID del usuario
-     */
     public void reactivarUsuario(Long id) {
         log.info("Reactivando usuario ID: {}", id);
         
@@ -331,12 +265,11 @@ public class UsuarioService {
     }
     
     // ==========================================
-    // MÉTODOS AUXILIARES
+    // MÉTODO AUXILIAR
     // ==========================================
     
     /**
      * Convierte una entidad Usuario a UsuarioResponseDTO
-     * USA SOLO LOS CAMPOS QUE EXISTEN EN EL MODELO
      */
     private UsuarioResponseDTO convertirAResponse(Usuario usuario) {
         AccountType accountType = usuario.getAccountType();
@@ -345,17 +278,19 @@ public class UsuarioService {
             .id(usuario.getId())
             .nombre(usuario.getNombre())
             .email(usuario.getEmail())
-            .telefono(null) // Campo no existe en modelo actual
+            .telefono(usuario.getTelefono())
             // Ubicación
-            .latitud(usuario.getUbicacion() != null ? usuario.getUbicacion().getLatitud() : null)
-            .longitud(usuario.getUbicacion() != null ? usuario.getUbicacion().getLongitud() : null)
-            .ciudad(null) // Campo no existe en modelo actual
-            .pais(null) // Campo no existe en modelo actual
+            .latitud(usuario.getUbicacion() != null ? 
+                usuario.getUbicacion().getLatitud() : null)
+            .longitud(usuario.getUbicacion() != null ? 
+                usuario.getUbicacion().getLongitud() : null)
+            .ciudad(usuario.getCiudad())
+            .pais(usuario.getPais())
             // Cuenta
             .accountType(accountType)
             .accountTypeDisplay(accountType.getDisplayName())
             .presupuestoMensualBase(usuario.getPresupuestoMensualBase())
-            .transaccionesMesActual(0) // Campo no existe en modelo actual
+            .transaccionesMesActual(usuario.getTransaccionesMesActual())
             .limiteTransaccionesMes(accountType.getLimiteTransaccionesMes())
             // Beneficios
             .descuentoPorcentaje(accountType.getDescuentoPorcentaje())
@@ -364,11 +299,14 @@ public class UsuarioService {
             // Estado
             .activo(usuario.getActivo())
             .fechaCreacion(usuario.getFechaCreacion())
-            .ultimoAcceso(null) // Campo no existe en modelo actual
+            .ultimoAcceso(usuario.getUltimoAcceso())
             // Estadísticas
-            .totalPresupuestos(usuario.getPresupuestos() != null ? usuario.getPresupuestos().size() : 0)
-            .totalGastos(usuario.getExpenses() != null ? usuario.getExpenses().size() : 0)
-            .totalReviews(usuario.getReviews() != null ? usuario.getReviews().size() : 0)
+            .totalPresupuestos(usuario.getPresupuestos() != null ? 
+                usuario.getPresupuestos().size() : 0)
+            .totalGastos(usuario.getExpenses() != null ? 
+                usuario.getExpenses().size() : 0)
+            .totalReviews(usuario.getReviews() != null ? 
+                usuario.getReviews().size() : 0)
             .build();
     }
 }

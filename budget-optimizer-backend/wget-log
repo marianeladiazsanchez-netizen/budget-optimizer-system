@@ -1,0 +1,15 @@
+--2025-11-19 02:15:18--  https://nominatim.openstreetmap.org/search?q=Cartagena,Colombia
+Resolving nominatim.openstreetmap.org (nominatim.openstreetmap.org)... 140.211.167.100
+Connecting to nominatim.openstreetmap.org (nominatim.openstreetmap.org)|140.211.167.100|:443... connected.
+HTTP request sent, awaiting response... 302 Moved Temporarily
+Location: https://nominatim.openstreetmap.org/ui/search.html?q=Cartagena,Colombia [following]
+--2025-11-19 02:15:19--  https://nominatim.openstreetmap.org/ui/search.html?q=Cartagena,Colombia
+Reusing existing connection to nominatim.openstreetmap.org:443.
+HTTP request sent, awaiting response... 200 OK
+Length: 780 [text/html]
+Saving to: ‘search?q=Cartagena,Colombia’
+
+search?q=Cartagena,Colombia            0%[                                                                       ]       0  --.-KB/s               search?q=Cartagena,Colombia          100%[======================================================================>]     780  --.-KB/s    in 0s      
+
+2025-11-19 02:15:19 (56.0 MB/s) - ‘search?q=Cartagena,Colombia’ saved [780/780]
+

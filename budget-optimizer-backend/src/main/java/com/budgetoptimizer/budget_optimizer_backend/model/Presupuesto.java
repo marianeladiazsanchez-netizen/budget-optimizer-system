@@ -8,6 +8,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import com.budgetoptimizer.budget_optimizer_backend.enums.BudgetPeriod;
 import com.budgetoptimizer.budget_optimizer_backend.enums.BudgetStatus;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -16,6 +17,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class Presupuesto {
 
     @Id

@@ -100,7 +100,7 @@ public class GlobalExceptionHandler {
             .build();
         
         return new ResponseEntity<>(error, HttpStatus.TOO_MANY_REQUESTS);
-    }
+    };
     
     /**
      * Errores de validación (@Valid) (400 Bad Request)

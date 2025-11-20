@@ -11,6 +11,8 @@ import java.math.BigDecimal;
 /**
  * DTO para registro de nuevos usuarios
  * Contiene validaciones de entrada
+ * Las coordenadas son opcionales y deben ser provistas por el frontend
+ * (que las obtuvo de tu API Python de geolocalización)
  */
 @Data
 @Builder
@@ -42,6 +44,10 @@ public class RegistroUsuarioDTO {
     @NotBlank(message = "El país es obligatorio")
     @Size(max = 100, message = "El país no puede exceder 100 caracteres")
     private String pais;
+    
+    // COORDENADAS OPCIONALES - Provistas por el frontend desde tu API Python
+    private Double latitud;
+    private Double longitud;
     
     @NotNull(message = "El presupuesto mensual base es obligatorio")
     @DecimalMin(value = "0.0", inclusive = false, message = "El presupuesto debe ser mayor a 0")

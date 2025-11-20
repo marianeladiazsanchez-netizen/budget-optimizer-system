@@ -24,7 +24,6 @@ public class UsuarioService {
     
     private final UsuarioRepository usuarioRepo;
     private final CuentaRepository cuentaRepo;
-    private final ServicioGeolocalizacion geoService;
     
     // ==========================================
     // REGISTRO Y CREACIÓN
@@ -32,6 +31,7 @@ public class UsuarioService {
     
     /**
      * Registra un nuevo usuario en el sistema
+     * Las coordenadas deben ser provistas por el cliente (que las obtuvo de tu API Python)
      */
     public UsuarioResponseDTO registrarUsuario(RegistroUsuarioDTO dto) {
         log.info("Iniciando registro de usuario con email: {}", dto.getEmail());
@@ -42,16 +42,12 @@ public class UsuarioService {
             throw new EmailYaRegistradoException(dto.getEmail());
         }
         
-        // 2. Obtener coordenadas de ubicación
-        Coordenada ubicacion;
-        try {
-            ubicacion = geoService.obtenerCoordenadas(dto.getCiudad(), dto.getPais());
-            log.info("Coordenadas obtenidas: lat={}, lng={}", 
-                ubicacion.getLatitud(), ubicacion.getLongitud());
-        } catch (Exception e) {
-            log.error("Error obteniendo coordenadas para {}, {}", 
-                dto.getCiudad(), dto.getPais(), e);
-            throw new GeolocalizacionException(dto.getCiudad(), dto.getPais());
+        // 2. Crear ubicación si vienen coordenadas
+        Coordenada ubicacion = null;
+        if (dto.getLatitud() != null && dto.getLongitud() != null) {
+            ubicacion = new Coordenada(dto.getLatitud(), dto.getLongitud());
+            log.info("Coordenadas registradas: lat={}, lng={}", 
+                dto.getLatitud(), dto.getLongitud());
         }
         
         // 3. Crear usuario con Builder
@@ -162,23 +158,21 @@ public class UsuarioService {
             usuario.setPresupuestoMensualBase(dto.getPresupuestoMensualBase());
         }
         
-        // Si cambió ciudad o país, actualizar ubicación
-        if (dto.getCiudad() != null && dto.getPais() != null) {
-            try {
-                Coordenada nuevaUbicacion = geoService.obtenerCoordenadas(
-                    dto.getCiudad(), 
-                    dto.getPais()
-                );
-                usuario.setUbicacion(nuevaUbicacion);
-                usuario.setCiudad(dto.getCiudad());
-                usuario.setPais(dto.getPais());
-                
-                log.info("Ubicación actualizada: lat={}, lng={}", 
-                    nuevaUbicacion.getLatitud(), nuevaUbicacion.getLongitud());
-            } catch (Exception e) {
-                log.error("Error actualizando ubicación", e);
-                throw new GeolocalizacionException(dto.getCiudad(), dto.getPais());
-            }
+        // Si cambió ciudad o país, actualizar (coordenadas vendrán del frontend/API Python)
+        if (dto.getCiudad() != null) {
+            usuario.setCiudad(dto.getCiudad());
+        }
+        
+        if (dto.getPais() != null) {
+            usuario.setPais(dto.getPais());
+        }
+        
+        // Si vienen coordenadas nuevas, actualizarlas
+        if (dto.getLatitud() != null && dto.getLongitud() != null) {
+            Coordenada nuevaUbicacion = new Coordenada(dto.getLatitud(), dto.getLongitud());
+            usuario.setUbicacion(nuevaUbicacion);
+            log.info("Ubicación actualizada: lat={}, lng={}", 
+                dto.getLatitud(), dto.getLongitud());
         }
         
         usuario = usuarioRepo.save(usuario);

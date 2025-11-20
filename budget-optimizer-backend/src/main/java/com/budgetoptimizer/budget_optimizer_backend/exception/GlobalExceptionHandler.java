@@ -103,26 +103,6 @@ public class GlobalExceptionHandler {
     }
     
     /**
-     * Error de geolocalización (503 Service Unavailable)
-     */
-    @ExceptionHandler(GeolocalizacionException.class)
-    public ResponseEntity<ErrorResponse> handleGeolocalizacion(
-            GeolocalizacionException ex, 
-            HttpServletRequest request) {
-        
-        log.error("Error de geolocalización: {}", ex.getMessage());
-        
-        ErrorResponse error = ErrorResponse.builder()
-            .status(HttpStatus.SERVICE_UNAVAILABLE.value())
-            .error("Service Unavailable")
-            .mensaje(ex.getMessage())
-            .path(request.getRequestURI())
-            .build();
-        
-        return new ResponseEntity<>(error, HttpStatus.SERVICE_UNAVAILABLE);
-    }
-    
-    /**
      * Errores de validación (@Valid) (400 Bad Request)
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)

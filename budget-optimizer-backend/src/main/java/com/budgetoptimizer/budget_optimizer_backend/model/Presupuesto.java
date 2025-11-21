@@ -2,6 +2,7 @@ package com.budgetoptimizer.budget_optimizer_backend.model;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -24,7 +25,7 @@ public class Presupuesto {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
 
@@ -52,10 +53,12 @@ public class Presupuesto {
     private LocalDateTime fechaCreacion;
 
     @OneToMany(mappedBy = "presupuesto", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<CategoryLimit> limitesCategorias;
+    @Builder.Default
+    private List<CategoryLimit> limitesCategorias = new ArrayList<>();
 
     @OneToMany(mappedBy = "presupuesto", cascade = CascadeType.ALL)
-    private List<Expense> expenses;
+    @Builder.Default
+    private List<Expense> expenses = new ArrayList<>();
 
     // Métodos helper
     public BigDecimal calcularGastoTotal() {

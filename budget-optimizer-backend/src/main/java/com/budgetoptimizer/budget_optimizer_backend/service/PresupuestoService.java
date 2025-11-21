@@ -406,6 +406,11 @@ public class PresupuestoService {
     }
     
     private BigDecimal calcularGastoTotal(Presupuesto presupuesto) {
+
+        if (presupuesto.getExpenses() == null) {
+        return BigDecimal.ZERO;
+        }
+        
         return presupuesto.getExpenses().stream()
             .map(Expense::getMonto)
             .reduce(BigDecimal.ZERO, BigDecimal::add);

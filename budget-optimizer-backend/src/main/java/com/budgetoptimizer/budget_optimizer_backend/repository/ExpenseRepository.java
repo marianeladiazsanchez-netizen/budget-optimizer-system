@@ -28,6 +28,10 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
     List<Expense> findByCategoriaId(Long categoriaId);
     List<Expense> findByUsuarioIdAndCategoriaId(Long usuarioId, Long categoriaId);
     
+    // ⭐ NUEVOS: Combinaciones para filtros avanzados
+    List<Expense> findByPresupuestoIdAndCategoriaId(Long presupuestoId, Long categoriaId);
+    List<Expense> findByPresupuestoIdAndFechaGastoBetween(Long presupuestoId, LocalDateTime inicio, LocalDateTime fin);
+    
     // Por empresa
     List<Expense> findByEmpresaId(String empresaId);
     List<Expense> findByUsuarioIdAndEmpresaId(Long usuarioId, String empresaId);
@@ -53,24 +57,12 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
     // @Query PARA AGREGACIONES Y CÁLCULOS
     // ==========================================
     
-    /**
-     * Suma total de gastos de un presupuesto
-     * Usa @Query porque necesita SUM()
-     */
     @Query("SELECT COALESCE(SUM(e.monto), 0) FROM Expense e WHERE e.presupuesto.id = :presupuestoId")
     Double sumMontoByPresupuestoId(@Param("presupuestoId") Long presupuestoId);
     
-    /**
-     * Suma de gastos por categoría
-     * Usa @Query porque necesita SUM()
-     */
     @Query("SELECT COALESCE(SUM(e.monto), 0) FROM Expense e WHERE e.categoria.id = :categoriaId")
     Double sumMontoByCategoriaId(@Param("categoriaId") Long categoriaId);
     
-    /**
-     * Gastos agrupados por categoría
-     * Usa @Query porque necesita GROUP BY
-     */
     @Query("SELECT e.categoria.nombre, SUM(e.monto) " +
            "FROM Expense e " +
            "WHERE e.usuario.id = :usuarioId " +
@@ -78,10 +70,6 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
            "ORDER BY SUM(e.monto) DESC")
     List<Object[]> findGastosPorCategoria(@Param("usuarioId") Long usuarioId);
     
-    /**
-     * Promedio de gasto por categoría
-     * Usa @Query porque necesita AVG() y GROUP BY
-     */
     @Query("SELECT e.categoria.nombre, AVG(e.monto) " +
            "FROM Expense e " +
            "WHERE e.usuario.id = :usuarioId " +

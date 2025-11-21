@@ -19,7 +19,7 @@ public interface CategoriaRepository extends JpaRepository<Categoria, Long> {
     
     // Búsqueda básica
     Optional<Categoria> findByNombre(String nombre);
-    boolean existsByNombre(String nombre);
+    boolean existsByNombreIgnoreCase(String nombre);
     List<Categoria> findByNombreContainingIgnoreCase(String texto);
     
     // Por estado
@@ -28,7 +28,7 @@ public interface CategoriaRepository extends JpaRepository<Categoria, Long> {
     
     // Por tipo
     List<Categoria> findByTipo(CategoryType tipo);
-    List<Categoria> findByTipoAndActivaTrue(CategoryType tipo);
+    List<Categoria> findByActivaTrueAndTipoIn(CategoryType tipo);
     
     // Por tipo de empresa
     List<Categoria> findByTipoEmpresaAsociada(TipoEmpresa tipoEmpresa);

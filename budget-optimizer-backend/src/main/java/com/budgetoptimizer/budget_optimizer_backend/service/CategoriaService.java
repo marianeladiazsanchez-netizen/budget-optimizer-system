@@ -28,20 +28,23 @@ public class CategoriaService {
 
     @Transactional(readOnly = true)
     public List<CategoriaResponseDTO> getCategoriesForExpenses() {
-        return categoriaRepository.findByActivaTrueAndTipoIn(
-                List.of(CategoryType.EXPENSE, CategoryType.BOTH)
-        ).stream()
-         .map(this::mapToResponseDTO)
-         .collect(Collectors.toList());
+        // ✅ Usar el método @Query del repositorio
+        return categoriaRepository.findCategoriasParaGastos()
+                .stream()
+                .map(this::mapToResponseDTO)
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public List<CategoriaResponseDTO> getCategoriesForIncome() {
-        return categoriaRepository.findByActivaTrueAndTipoIn(
-                List.of(TipoCategoria.INCOME, TipoCategoria.BOTH)
-        ).stream()
-         .map(this::mapToResponseDTO)
-         .collect(Collectors.toList());
+        // ✅ Para ingresos, filtramos manualmente ya que CategoryType no tiene INCOME
+        // Asumiendo que las categorías de ingreso tienen tipo EXPENSE o BOTH
+        // Si necesitas un tipo específico, deberías agregar INCOME al enum CategoryType
+        return categoriaRepository.findByActivaTrue()
+                .stream()
+                .filter(c -> c.getTipo() == CategoryType.EXPENSE || c.getTipo() == CategoryType.BOTH)
+                .map(this::mapToResponseDTO)
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -59,7 +62,7 @@ public class CategoriaService {
                 .icono(categoria.getIcono())
                 .color(categoria.getColor())
                 .tipo(categoria.getTipo())
-                .activa(categoria.isActiva())
+                .activa(categoria.getActiva())
                 .build();
     }
 }

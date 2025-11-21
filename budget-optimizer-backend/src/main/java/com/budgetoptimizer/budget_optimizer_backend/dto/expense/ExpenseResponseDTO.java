@@ -29,6 +29,7 @@ public class ExpenseResponseDTO {
     private String categoriaColor;
     private Long usuarioId;
     private String usuarioNombre;
-    private LocalDateTime createdAt;
+    
+    // ✅ Cambiado de createdAt a fechaCreacion para coincidir con la entidad
+    private LocalDateTime fechaCreacion;
 }
-

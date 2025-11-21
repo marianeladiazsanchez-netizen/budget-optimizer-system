@@ -2,7 +2,6 @@ package com.budgetoptimizer.budget_optimizer_backend.service;
 
 import com.budgetoptimizer.budget_optimizer_backend.dto.expense.ExpenseDTO;
 import com.budgetoptimizer.budget_optimizer_backend.dto.expense.ExpenseResponseDTO;
-import com.budgetoptimizer.budget_optimizer_backend.exception.ResourceNotFoundException;
 import com.budgetoptimizer.budget_optimizer_backend.model.Categoria;
 import com.budgetoptimizer.budget_optimizer_backend.model.Expense;
 import com.budgetoptimizer.budget_optimizer_backend.model.Presupuesto;
@@ -12,6 +11,7 @@ import com.budgetoptimizer.budget_optimizer_backend.repository.ExpenseRepository
 import com.budgetoptimizer.budget_optimizer_backend.repository.PresupuestoRepository;
 import com.budgetoptimizer.budget_optimizer_backend.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,182 +20,261 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Servicio de lógica de negocio para gestión de gastos
+ */
 @Service
 @RequiredArgsConstructor
+@Slf4j
+@Transactional
 public class ExpenseService {
 
-    private final ExpenseRepository expenseRepository;
-    private final PresupuestoRepository presupuestoRepository;
-    private final CategoriaRepository categoriaRepository;
-    private final UsuarioRepository usuarioRepository;
+    private final ExpenseRepository expenseRepo;
+    private final PresupuestoRepository presupuestoRepo;
+    private final CategoriaRepository categoriaRepo;
+    private final UsuarioRepository usuarioRepo;
 
-    @Transactional
+    // ==========================================
+    // CREACIÓN
+    // ==========================================
+
+    /**
+     * Crea un nuevo gasto
+     */
     public ExpenseResponseDTO createExpense(ExpenseDTO dto) {
-        // Validar que el presupuesto existe
-        Presupuesto presupuesto = presupuestoRepository.findById(dto.getPresupuestoId())
-                .orElseThrow(() -> new ResourceNotFoundException("Presupuesto no encontrado con ID: " + dto.getPresupuestoId()));
+        log.info("Creando gasto - Usuario: {}, Monto: {}", dto.getUsuarioId(), dto.getMonto());
 
-        // Validar que la categoría existe y está activa
-        Categoria categoria = categoriaRepository.findById(dto.getCategoriaId())
-                .orElseThrow(() -> new ResourceNotFoundException("Categoría no encontrada con ID: " + dto.getCategoriaId()));
+        // 1. Validar y obtener usuario
+        Usuario usuario = usuarioRepo.findById(dto.getUsuarioId())
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + dto.getUsuarioId()));
 
-        if (!categoria.isActiva()) {
-            throw new IllegalArgumentException("La categoría está inactiva");
-        }
+        // 2. Validar y obtener presupuesto
+        Presupuesto presupuesto = presupuestoRepo.findById(dto.getPresupuestoId())
+                .orElseThrow(() -> new RuntimeException("Presupuesto no encontrado con ID: " + dto.getPresupuestoId()));
 
-        // Validar que el usuario existe
-        Usuario usuario = usuarioRepository.findById(dto.getUsuarioId())
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + dto.getUsuarioId()));
-
-        // Validar que el presupuesto pertenece al usuario
+        // 3. Validar que el presupuesto pertenece al usuario
         if (!presupuesto.getUsuario().getId().equals(usuario.getId())) {
             throw new IllegalArgumentException("El presupuesto no pertenece al usuario");
         }
 
-        // Crear el gasto
-        Expense expense = Expense.builder()
-                .monto(dto.getMonto())
-                .descripcion(dto.getDescripcion())
-                .fechaGasto(dto.getFechaGasto())
-                .presupuesto(presupuesto)
-                .categoria(categoria)
-                .usuario(usuario)
-                .build();
-
-        Expense saved = expenseRepository.save(expense);
-
-        // Actualizar el gasto actual del presupuesto
-        BigDecimal nuevoGastoActual = presupuesto.getGastoActual().add(dto.getMonto());
-        presupuesto.setGastoActual(nuevoGastoActual);
-        presupuestoRepository.save(presupuesto);
-
-        return mapToResponseDTO(saved);
-    }
-
-    @Transactional(readOnly = true)
-    public List<ExpenseResponseDTO> getExpensesByPresupuesto(Long presupuestoId) {
-        if (!presupuestoRepository.existsById(presupuestoId)) {
-            throw new ResourceNotFoundException("Presupuesto no encontrado con ID: " + presupuestoId);
+        // 4. Validar que el presupuesto permite registrar gastos
+        if (!presupuesto.getStatus().getPuedeRegistrarGastos()) {
+            throw new IllegalStateException(
+                    "El presupuesto en estado " + presupuesto.getStatus() + " no permite registrar gastos");
         }
 
-        return expenseRepository.findByPresupuestoId(presupuestoId)
-                .stream()
-                .map(this::mapToResponseDTO)
-                .collect(Collectors.toList());
-    }
+        // 5. Validar y obtener categoría
+        Categoria categoria = categoriaRepo.findById(dto.getCategoriaId())
+                .orElseThrow(() -> new RuntimeException("Categoría no encontrada con ID: " + dto.getCategoriaId()));
 
-    @Transactional(readOnly = true)
-    public List<ExpenseResponseDTO> getExpensesByUsuario(Long usuarioId) {
-        if (!usuarioRepository.existsById(usuarioId)) {
-            throw new ResourceNotFoundException("Usuario no encontrado con ID: " + usuarioId);
-        }
-
-        return expenseRepository.findByUsuarioId(usuarioId)
-                .stream()
-                .map(this::mapToResponseDTO)
-                .collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public List<ExpenseResponseDTO> getExpensesByUsuarioAndDateRange(Long usuarioId, LocalDateTime inicio, LocalDateTime fin) {
-        if (!usuarioRepository.existsById(usuarioId)) {
-            throw new ResourceNotFoundException("Usuario no encontrado con ID: " + usuarioId);
-        }
-
-        return expenseRepository.findByUsuarioIdAndFechaGastoBetween(usuarioId, inicio, fin)
-                .stream()
-                .map(this::mapToResponseDTO)
-                .collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public ExpenseResponseDTO getExpenseById(Long id) {
-        Expense expense = expenseRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Gasto no encontrado con ID: " + id));
-        return mapToResponseDTO(expense);
-    }
-
-    @Transactional
-    public ExpenseResponseDTO updateExpense(Long id, ExpenseDTO dto) {
-        Expense expense = expenseRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Gasto no encontrado con ID: " + id));
-
-        BigDecimal montoAnterior = expense.getMonto();
-        Presupuesto presupuestoAnterior = expense.getPresupuesto();
-
-        // Validar nuevo presupuesto si cambió
-        Presupuesto nuevoPresupuesto = presupuestoRepository.findById(dto.getPresupuestoId())
-                .orElseThrow(() -> new ResourceNotFoundException("Presupuesto no encontrado con ID: " + dto.getPresupuestoId()));
-
-        // Validar nueva categoría si cambió
-        Categoria nuevaCategoria = categoriaRepository.findById(dto.getCategoriaId())
-                .orElseThrow(() -> new ResourceNotFoundException("Categoría no encontrada con ID: " + dto.getCategoriaId()));
-
-        if (!nuevaCategoria.isActiva()) {
+        if (!categoria.getActiva()) {
             throw new IllegalArgumentException("La categoría está inactiva");
         }
 
-        // Actualizar el gasto
+        // 6. Validar que la categoría puede usarse para gastos
+        if (!categoria.getTipo().puedeUsarseParaGastos()) {
+            throw new IllegalArgumentException(
+                    "La categoría '" + categoria.getNombre() + "' no puede usarse para gastos");
+        }
+
+        // 7. Crear el gasto
+        Expense expense = new Expense();
+        expense.setMonto(dto.getMonto());
+        expense.setDescripcion(dto.getDescripcion());
+        expense.setFechaGasto(dto.getFechaGasto());
+        expense.setUsuario(usuario);
+        expense.setPresupuesto(presupuesto);
+        expense.setCategoria(categoria);
+
+        Expense saved = expenseRepo.save(expense);
+        log.info("Gasto creado con ID: {}", saved.getId());
+
+        return convertirAResponse(saved);
+    }
+
+    // ==========================================
+    // CONSULTAS
+    // ==========================================
+
+    /**
+     * Obtiene todos los gastos de un presupuesto
+     */
+    @Transactional(readOnly = true)
+    public List<ExpenseResponseDTO> getExpensesByPresupuesto(Long presupuestoId) {
+        log.info("Obteniendo gastos del presupuesto ID: {}", presupuestoId);
+
+        if (!presupuestoRepo.existsById(presupuestoId)) {
+            throw new RuntimeException("Presupuesto no encontrado con ID: " + presupuestoId);
+        }
+
+        return expenseRepo.findByPresupuestoId(presupuestoId)
+                .stream()
+                .map(this::convertirAResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Obtiene todos los gastos de un usuario
+     */
+    @Transactional(readOnly = true)
+    public List<ExpenseResponseDTO> getExpensesByUsuario(Long usuarioId) {
+        log.info("Obteniendo gastos del usuario ID: {}", usuarioId);
+
+        if (!usuarioRepo.existsById(usuarioId)) {
+            throw new RuntimeException("Usuario no encontrado con ID: " + usuarioId);
+        }
+
+        return expenseRepo.findByUsuarioIdOrderByFechaGastoDesc(usuarioId)
+                .stream()
+                .map(this::convertirAResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Obtiene gastos de un usuario en un rango de fechas
+     */
+    @Transactional(readOnly = true)
+    public List<ExpenseResponseDTO> getExpensesByUsuarioAndDateRange(
+            Long usuarioId,
+            LocalDateTime inicio,
+            LocalDateTime fin) {
+
+        log.info("Obteniendo gastos del usuario ID: {} entre {} y {}", usuarioId, inicio, fin);
+
+        if (!usuarioRepo.existsById(usuarioId)) {
+            throw new RuntimeException("Usuario no encontrado con ID: " + usuarioId);
+        }
+
+        if (fin.isBefore(inicio)) {
+            throw new IllegalArgumentException("La fecha de fin debe ser posterior a la de inicio");
+        }
+
+        return expenseRepo.findByUsuarioIdAndFechaGastoBetween(usuarioId, inicio, fin)
+                .stream()
+                .map(this::convertirAResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Obtiene un gasto específico por ID
+     */
+    @Transactional(readOnly = true)
+    public ExpenseResponseDTO getExpenseById(Long id) {
+        log.info("Obteniendo gasto con ID: {}", id);
+
+        Expense expense = expenseRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Gasto no encontrado con ID: " + id));
+
+        return convertirAResponse(expense);
+    }
+
+    /**
+     * Obtiene gastos de un presupuesto por categoría
+     */
+    @Transactional(readOnly = true)
+    public List<ExpenseResponseDTO> getExpensesByPresupuestoAndCategoria(
+            Long presupuestoId,
+            Long categoriaId) {
+
+        log.info("Obteniendo gastos del presupuesto {} en categoría {}", presupuestoId, categoriaId);
+
+        if (!presupuestoRepo.existsById(presupuestoId)) {
+            throw new RuntimeException("Presupuesto no encontrado con ID: " + presupuestoId);
+        }
+
+        if (!categoriaRepo.existsById(categoriaId)) {
+            throw new RuntimeException("Categoría no encontrada con ID: " + categoriaId);
+        }
+
+        return expenseRepo.findByPresupuestoIdAndCategoriaId(presupuestoId, categoriaId)
+                .stream()
+                .map(this::convertirAResponse)
+                .collect(Collectors.toList());
+    }
+
+    // ==========================================
+    // ACTUALIZACIÓN
+    // ==========================================
+
+    /**
+     * Actualiza un gasto existente
+     */
+    public ExpenseResponseDTO updateExpense(Long id, ExpenseDTO dto) {
+        log.info("Actualizando gasto ID: {}", id);
+
+        // 1. Obtener gasto existente
+        Expense expense = expenseRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Gasto no encontrado con ID: " + id));
+
+        BigDecimal montoAnterior = expense.getMonto();
+
+        // 2. Validar y obtener nuevo presupuesto
+        Presupuesto nuevoPresupuesto = presupuestoRepo.findById(dto.getPresupuestoId())
+                .orElseThrow(() -> new RuntimeException("Presupuesto no encontrado con ID: " + dto.getPresupuestoId()));
+
+        // 3. Validar que el presupuesto permite editar
+        if (!nuevoPresupuesto.getStatus().getPuedeRegistrarGastos()) {
+            throw new IllegalStateException(
+                    "El presupuesto en estado " + nuevoPresupuesto.getStatus() + " no permite modificar gastos");
+        }
+
+        // 4. Validar y obtener nueva categoría
+        Categoria nuevaCategoria = categoriaRepo.findById(dto.getCategoriaId())
+                .orElseThrow(() -> new RuntimeException("Categoría no encontrada con ID: " + dto.getCategoriaId()));
+
+        if (!nuevaCategoria.getActiva()) {
+            throw new IllegalArgumentException("La categoría está inactiva");
+        }
+
+        if (!nuevaCategoria.getTipo().puedeUsarseParaGastos()) {
+            throw new IllegalArgumentException("La categoría no puede usarse para gastos");
+        }
+
+        // 5. Actualizar campos
         expense.setMonto(dto.getMonto());
         expense.setDescripcion(dto.getDescripcion());
         expense.setFechaGasto(dto.getFechaGasto());
         expense.setPresupuesto(nuevoPresupuesto);
         expense.setCategoria(nuevaCategoria);
 
-        Expense updated = expenseRepository.save(expense);
+        Expense updated = expenseRepo.save(expense);
+        log.info("Gasto actualizado: ID={}", id);
 
-        // Actualizar gastos actuales de los presupuestos
-        if (presupuestoAnterior.getId().equals(nuevoPresupuesto.getId())) {
-            // Mismo presupuesto, solo ajustar la diferencia
-            BigDecimal diferencia = dto.getMonto().subtract(montoAnterior);
-            nuevoPresupuesto.setGastoActual(nuevoPresupuesto.getGastoActual().add(diferencia));
-            presupuestoRepository.save(nuevoPresupuesto);
-        } else {
-            // Cambió de presupuesto
-            // Restar del anterior
-            presupuestoAnterior.setGastoActual(presupuestoAnterior.getGastoActual().subtract(montoAnterior));
-            presupuestoRepository.save(presupuestoAnterior);
-
-            // Sumar al nuevo
-            nuevoPresupuesto.setGastoActual(nuevoPresupuesto.getGastoActual().add(dto.getMonto()));
-            presupuestoRepository.save(nuevoPresupuesto);
-        }
-
-        return mapToResponseDTO(updated);
+        return convertirAResponse(updated);
     }
 
-    @Transactional
+    // ==========================================
+    // ELIMINACIÓN
+    // ==========================================
+
+    /**
+     * Elimina un gasto
+     */
     public void deleteExpense(Long id) {
-        Expense expense = expenseRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Gasto no encontrado con ID: " + id));
+        log.info("Eliminando gasto ID: {}", id);
 
-        // Actualizar el gasto actual del presupuesto (restar)
-        Presupuesto presupuesto = expense.getPresupuesto();
-        BigDecimal nuevoGastoActual = presupuesto.getGastoActual().subtract(expense.getMonto());
-        presupuesto.setGastoActual(nuevoGastoActual);
-        presupuestoRepository.save(presupuesto);
+        Expense expense = expenseRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Gasto no encontrado con ID: " + id));
 
-        // Eliminar el gasto
-        expenseRepository.delete(expense);
-    }
-
-    @Transactional(readOnly = true)
-    public List<ExpenseResponseDTO> getExpensesByPresupuestoAndCategoria(Long presupuestoId, Long categoriaId) {
-        if (!presupuestoRepository.existsById(presupuestoId)) {
-            throw new ResourceNotFoundException("Presupuesto no encontrado con ID: " + presupuestoId);
+        // Validar que el presupuesto permite eliminar gastos
+        if (!expense.getPresupuesto().getStatus().getPuedeRegistrarGastos()) {
+            throw new IllegalStateException(
+                    "No se pueden eliminar gastos de un presupuesto en estado " +
+                            expense.getPresupuesto().getStatus());
         }
 
-        if (!categoriaRepository.existsById(categoriaId)) {
-            throw new ResourceNotFoundException("Categoría no encontrada con ID: " + categoriaId);
-        }
-
-        return expenseRepository.findByPresupuestoIdAndCategoriaId(presupuestoId, categoriaId)
-                .stream()
-                .map(this::mapToResponseDTO)
-                .collect(Collectors.toList());
+        expenseRepo.delete(expense);
+        log.info("Gasto eliminado: ID={}", id);
     }
 
-    private ExpenseResponseDTO mapToResponseDTO(Expense expense) {
+    // ==========================================
+    // MÉTODO AUXILIAR
+    // ==========================================
+
+    /**
+     * Convierte una entidad Expense a ExpenseResponseDTO
+     */
+    private ExpenseResponseDTO convertirAResponse(Expense expense) {
         return ExpenseResponseDTO.builder()
                 .id(expense.getId())
                 .monto(expense.getMonto())
@@ -209,7 +288,7 @@ public class ExpenseService {
                 .categoriaColor(expense.getCategoria().getColor())
                 .usuarioId(expense.getUsuario().getId())
                 .usuarioNombre(expense.getUsuario().getNombre())
-                .createdAt(expense.getCreatedAt())
+                .fechaCreacion(expense.getFechaCreacion()) // ✅ Corregido
                 .build();
     }
 }

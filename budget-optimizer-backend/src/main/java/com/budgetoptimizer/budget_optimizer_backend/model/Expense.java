@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import com.budgetoptimizer.budget_optimizer_backend.enums.PaymentMethod;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -14,6 +15,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class Expense {
 
     @Id
@@ -34,12 +36,11 @@ public class Expense {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "empresa_id")
-    private Empresa empresa; // Si el gasto fue en una empresa específica
+    private Empresa empresa;
 
     @Column(nullable = false, length = 200)
     private String descripcion;
 
-    // 💰 Tipo BigDecimal con precisión y escala (compatible con Hibernate)
     @Column(nullable = false, precision = 15, scale = 2)
     private BigDecimal monto;
 
@@ -47,13 +48,14 @@ public class Expense {
     private LocalDateTime fechaGasto;
 
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private PaymentMethod metodoPago = PaymentMethod.CASH;
 
     @Column(length = 500)
     private String notas;
 
+    // ✅ Agregado campo fechaCreacion
     @CreationTimestamp
+    @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private LocalDateTime fechaCreacion;
-
-    
 }

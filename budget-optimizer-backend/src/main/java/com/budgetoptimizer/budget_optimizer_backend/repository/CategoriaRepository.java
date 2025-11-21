@@ -26,9 +26,9 @@ public interface CategoriaRepository extends JpaRepository<Categoria, Long> {
     List<Categoria> findByActivaTrue();
     List<Categoria> findByActivaFalse();
     
-    // Por tipo
+    // Por tipo (UN SOLO TIPO)
     List<Categoria> findByTipo(CategoryType tipo);
-    List<Categoria> findByActivaTrueAndTipoIn(CategoryType tipo);
+    List<Categoria> findByActivaTrueAndTipo(CategoryType tipo);
     
     // Por tipo de empresa
     List<Categoria> findByTipoEmpresaAsociada(TipoEmpresa tipoEmpresa);
@@ -36,7 +36,7 @@ public interface CategoriaRepository extends JpaRepository<Categoria, Long> {
     List<Categoria> findByTipoEmpresaAsociadaIsNullAndActivaTrue();
     
     // ==========================================
-    // @Query SOLO PARA LÓGICA OR
+    // @Query PARA LÓGICA OR
     // ==========================================
     
     /**

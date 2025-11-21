@@ -14,10 +14,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Manejador global de excepciones para toda la aplicación
- * Captura excepciones y las convierte en respuestas HTTP consistentes
- */
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
@@ -31,6 +27,26 @@ public class GlobalExceptionHandler {
             HttpServletRequest request) {
         
         log.error("Usuario no encontrado: {}", ex.getMessage());
+        
+        ErrorResponse error = ErrorResponse.builder()
+            .status(HttpStatus.NOT_FOUND.value())
+            .error("Not Found")
+            .mensaje(ex.getMessage())
+            .path(request.getRequestURI())
+            .build();
+        
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+    }
+    
+    /**
+     * ✅ NUEVO: Recurso genérico no encontrado (404 Not Found)
+     */
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleResourceNotFound(
+            ResourceNotFoundException ex, 
+            HttpServletRequest request) {
+        
+        log.error("Recurso no encontrado: {}", ex.getMessage());
         
         ErrorResponse error = ErrorResponse.builder()
             .status(HttpStatus.NOT_FOUND.value())
@@ -100,7 +116,7 @@ public class GlobalExceptionHandler {
             .build();
         
         return new ResponseEntity<>(error, HttpStatus.TOO_MANY_REQUESTS);
-    };
+    }
     
     /**
      * Errores de validación (@Valid) (400 Bad Request)
@@ -150,7 +166,27 @@ public class GlobalExceptionHandler {
     }
     
     /**
-     * Errores generales no capturados (500 Internal Server Error)
+     * ✅ NUEVO: Estados ilegales (400 Bad Request)
+     */
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalState(
+            IllegalStateException ex,
+            HttpServletRequest request) {
+        
+        log.error("Estado ilegal: {}", ex.getMessage());
+        
+        ErrorResponse error = ErrorResponse.builder()
+            .status(HttpStatus.BAD_REQUEST.value())
+            .error("Bad Request")
+            .mensaje(ex.getMessage())
+            .path(request.getRequestURI())
+            .build();
+        
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+    
+    /**
+     * Recurso estático no encontrado (404)
      */
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<ErrorResponse> handleNoResourceFound(
@@ -162,13 +198,16 @@ public class GlobalExceptionHandler {
         ErrorResponse error = ErrorResponse.builder()
             .status(HttpStatus.NOT_FOUND.value())
             .error("Not Found")
-            .mensaje("Recurso estático no encontrado")
+            .mensaje("Recurso no encontrado")
             .path(request.getRequestURI())
             .build();
 
         return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
     }
 
+    /**
+     * Errores generales no capturados (500 Internal Server Error)
+     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(
             Exception ex,

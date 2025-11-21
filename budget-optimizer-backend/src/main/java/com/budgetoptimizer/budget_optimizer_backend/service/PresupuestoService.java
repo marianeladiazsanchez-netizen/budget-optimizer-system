@@ -145,17 +145,24 @@ public class PresupuestoService {
             .collect(Collectors.toList());
     }
     
-    @Transactional(readOnly = true)
-    public PresupuestoResponseDTO buscarPresupuestoActual(Long usuarioId) {
-        log.info("Buscando presupuesto activo actual del usuario ID: {}", usuarioId);
-        
-        Presupuesto presupuesto = presupuestoRepo
-            .findPresupuestoActivoActual(usuarioId, LocalDateTime.now())
-            .orElseThrow(() -> new RuntimeException("No hay presupuesto activo actualmente"));
-        
-        return convertirAResponse(presupuesto);
-    }
+    // En PresupuestoService.java
+// Reemplaza el método buscarPresupuestoActual con este:
+
+@Transactional(readOnly = true)
+public PresupuestoResponseDTO buscarPresupuestoActual(Long usuarioId) {
+    log.info("Buscando presupuesto activo actual del usuario ID: {}", usuarioId);
     
+    // ✅ Ahora pasamos BudgetStatus.ACTIVE como parámetro
+    Presupuesto presupuesto = presupuestoRepo
+        .findPresupuestoActivoActual(
+            usuarioId, 
+            BudgetStatus.ACTIVE,  // ← Parámetro agregado
+            LocalDateTime.now()
+        )
+        .orElseThrow(() -> new RuntimeException("No hay presupuesto activo actualmente"));
+    
+    return convertirAResponse(presupuesto);
+}
     // ==========================================
     // ACTUALIZACIÓN
     // ==========================================

@@ -12,6 +12,12 @@
       "type": "string"
     },
     {
+      "key": "usuarioEmail",
+      "value": "juan.perez@example.com",
+      "type": "string",
+      "description": "✅ AGREGADO: Email del usuario para búsquedas"
+    },
+    {
       "key": "usuarioId",
       "value": "1",
       "type": "string"
@@ -112,13 +118,13 @@
                   "if (pm.response.code === 201) {",
                   "    const response = pm.response.json();",
                   "    pm.collectionVariables.set('usuarioId', response.id);",
+                  "    pm.collectionVariables.set('usuarioEmail', response.email);",
                   "    console.log('✅ Usuario ID guardado:', response.id);",
+                  "    console.log('✅ Usuario Email guardado:', response.email);",
                   "    pm.test('Usuario creado exitosamente', function() {",
                   "        pm.expect(response).to.have.property('id');",
                   "        pm.expect(response).to.have.property('email');",
                   "    });",
-                  "} else {",
-                  "    console.log('❌ Error al crear usuario');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -166,7 +172,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/usuarios/buscar?email={{usuarioEmail}}",
+              "raw": "{{baseUrl}}/api/usuarios/buscar?email=usuarioEmail",
               "host": ["{{baseUrl}}"],
               "path": ["api", "usuarios", "buscar"],
               "query": [

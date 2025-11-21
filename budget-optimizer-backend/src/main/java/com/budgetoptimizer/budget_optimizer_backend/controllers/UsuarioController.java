@@ -72,14 +72,30 @@ public class UsuarioController {
      * @param email Email del usuario (query parameter)
      * @return Usuario encontrado con código 200 OK
      */
-    @GetMapping("/buscar")
+     @GetMapping("/buscar")
     public ResponseEntity<UsuarioResponseDTO> buscarPorEmail(
-            @RequestParam String email) {
+            @RequestParam(required = true) String email) {
         
         log.info("GET /api/usuarios/buscar?email={}", email);
-        UsuarioResponseDTO usuario = usuarioService.buscarPorEmail(email);
         
-        return ResponseEntity.ok(usuario);
+        // Validación básica
+        if (email == null || email.trim().isEmpty()) {
+            log.warn("Email vacío o nulo");
+            return ResponseEntity.badRequest().build();
+        }
+        
+        if (!email.contains("@")) {
+            log.warn("Email inválido (sin @): {}", email);
+            return ResponseEntity.badRequest().build();
+        }
+        
+        try {
+            UsuarioResponseDTO usuario = usuarioService.buscarPorEmail(email.trim());
+            return ResponseEntity.ok(usuario);
+        } catch (Exception e) {
+            log.error("Error al buscar usuario por email: {}", e.getMessage());
+            return ResponseEntity.notFound().build();
+        }
     }
     
     /**

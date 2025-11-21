@@ -45,39 +45,38 @@ public interface PresupuestoRepository extends JpaRepository<Presupuesto, Long> 
     List<Presupuesto> findByUsuarioIdOrderByFechaCreacionDesc(Long usuarioId);
     
     // ==========================================
-    // @Query SOLO PARA LÓGICA COMPLEJA
+    // @Query PARA LÓGICA COMPLEJA
     // ==========================================
     
     /**
      * Presupuestos vigentes en una fecha
-     * Usa @Query porque necesita BETWEEN en ambas fechas
      */
     @Query("SELECT p FROM Presupuesto p WHERE " +
            ":fecha BETWEEN p.fechaInicio AND p.fechaFin")
     List<Presupuesto> findPresupuestosVigentes(@Param("fecha") LocalDateTime fecha);
     
     /**
-     * Presupuesto activo actual de un usuario
-     * Usa @Query porque combina múltiples condiciones y BETWEEN
+     * ✅ OPCIÓN 1: Usando parámetro de enum (RECOMENDADO)
      */
     @Query("SELECT p FROM Presupuesto p WHERE " +
            "p.usuario.id = :usuarioId AND " +
-           "p.status = 'ACTIVE' AND " +
+           "p.status = :status AND " +
            ":ahora BETWEEN p.fechaInicio AND p.fechaFin " +
            "ORDER BY p.fechaCreacion DESC")
     Optional<Presupuesto> findPresupuestoActivoActual(
         @Param("usuarioId") Long usuarioId,
+        @Param("status") BudgetStatus status,
         @Param("ahora") LocalDateTime ahora
     );
     
     /**
      * Presupuestos próximos a vencer
-     * Usa @Query porque necesita rango específico de fechas futuras
      */
     @Query("SELECT p FROM Presupuesto p WHERE " +
-           "p.status = 'ACTIVE' AND " +
+           "p.status = :status AND " +
            "p.fechaFin BETWEEN :ahora AND :fechaLimite")
     List<Presupuesto> findPresupuestosProximosAVencer(
+        @Param("status") BudgetStatus status,
         @Param("ahora") LocalDateTime ahora,
         @Param("fechaLimite") LocalDateTime fechaLimite
     );

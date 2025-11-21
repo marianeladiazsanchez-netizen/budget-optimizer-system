@@ -38,7 +38,8 @@ public class Expense {
     @JoinColumn(name = "empresa_id")
     private Empresa empresa;
 
-    @Column(nullable = false, length = 200)
+    // ✅ CORREGIDO: Aumentar longitud a 500
+    @Column(nullable = false, length = 500)
     private String descripcion;
 
     @Column(nullable = false, precision = 15, scale = 2)
@@ -48,13 +49,13 @@ public class Expense {
     private LocalDateTime fechaGasto;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "metodo_pago")
     @Builder.Default
     private PaymentMethod metodoPago = PaymentMethod.CASH;
 
     @Column(length = 500)
     private String notas;
 
-    // ✅ Agregado campo fechaCreacion
     @CreationTimestamp
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private LocalDateTime fechaCreacion;

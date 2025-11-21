@@ -1,5 +1,6 @@
 package com.budgetoptimizer.budget_optimizer_backend.dto.expense;
 
+import com.budgetoptimizer.budget_optimizer_backend.enums.PaymentMethod;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,9 +10,6 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-/**
- * DTO para crear/actualizar gastos
- */
 @Data
 @Builder
 @NoArgsConstructor
@@ -38,4 +36,14 @@ public class ExpenseDTO {
 
     @NotNull(message = "El usuario es obligatorio")
     private Long usuarioId;
+
+    // ✅ AGREGADO: Campo metodoPago (opcional)
+    private PaymentMethod metodoPago;
+
+    // ✅ AGREGADO: Campo opcional para empresa
+    private String empresaId;
+
+    // ✅ AGREGADO: Notas opcionales
+    @Size(max = 500, message = "Las notas no pueden exceder 500 caracteres")
+    private String notas;
 }

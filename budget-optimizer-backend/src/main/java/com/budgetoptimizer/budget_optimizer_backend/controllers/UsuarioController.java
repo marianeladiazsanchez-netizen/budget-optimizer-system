@@ -20,6 +20,7 @@ import java.util.List;
 @RequestMapping("/api/usuarios")
 @RequiredArgsConstructor
 @Slf4j
+@CrossOrigin(origins = "*")  // ✅ Añadido para permitir peticiones desde frontend
 public class UsuarioController {
     
     private final UsuarioService usuarioService;
@@ -65,15 +66,17 @@ public class UsuarioController {
     }
     
     /**
-     * Busca un usuario por su email
-     * GET /api/usuarios/email/{email}
+     * ✅ FIXED: Busca un usuario por su email usando query parameter
+     * GET /api/usuarios/buscar?email=juan@example.com
      * 
-     * @param email Email del usuario
+     * @param email Email del usuario (query parameter)
      * @return Usuario encontrado con código 200 OK
      */
-    @GetMapping("/email/{email}")
-    public ResponseEntity<UsuarioResponseDTO> buscarPorEmail(@PathVariable String email) {
-        log.info("GET /api/usuarios/email/{}", email);
+    @GetMapping("/buscar")
+    public ResponseEntity<UsuarioResponseDTO> buscarPorEmail(
+            @RequestParam String email) {
+        
+        log.info("GET /api/usuarios/buscar?email={}", email);
         UsuarioResponseDTO usuario = usuarioService.buscarPorEmail(email);
         
         return ResponseEntity.ok(usuario);

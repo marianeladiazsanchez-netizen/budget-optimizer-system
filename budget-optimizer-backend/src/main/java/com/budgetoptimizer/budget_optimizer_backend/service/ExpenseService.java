@@ -2,14 +2,9 @@ package com.budgetoptimizer.budget_optimizer_backend.service;
 
 import com.budgetoptimizer.budget_optimizer_backend.dto.expense.ExpenseDTO;
 import com.budgetoptimizer.budget_optimizer_backend.dto.expense.ExpenseResponseDTO;
-import com.budgetoptimizer.budget_optimizer_backend.model.Categoria;
-import com.budgetoptimizer.budget_optimizer_backend.model.Expense;
-import com.budgetoptimizer.budget_optimizer_backend.model.Presupuesto;
-import com.budgetoptimizer.budget_optimizer_backend.model.Usuario;
-import com.budgetoptimizer.budget_optimizer_backend.repository.CategoriaRepository;
-import com.budgetoptimizer.budget_optimizer_backend.repository.ExpenseRepository;
-import com.budgetoptimizer.budget_optimizer_backend.repository.PresupuestoRepository;
-import com.budgetoptimizer.budget_optimizer_backend.repository.UsuarioRepository;
+import com.budgetoptimizer.budget_optimizer_backend.enums.PaymentMethod;
+import com.budgetoptimizer.budget_optimizer_backend.model.*;
+import com.budgetoptimizer.budget_optimizer_backend.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,9 +15,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Servicio de lógica de negocio para gestión de gastos
- */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -33,14 +25,12 @@ public class ExpenseService {
     private final PresupuestoRepository presupuestoRepo;
     private final CategoriaRepository categoriaRepo;
     private final UsuarioRepository usuarioRepo;
+    private final EmpresaRepository empresaRepo;
 
     // ==========================================
     // CREACIÓN
     // ==========================================
 
-    /**
-     * Crea un nuevo gasto
-     */
     public ExpenseResponseDTO createExpense(ExpenseDTO dto) {
         log.info("Creando gasto - Usuario: {}, Monto: {}", dto.getUsuarioId(), dto.getMonto());
 
@@ -71,20 +61,30 @@ public class ExpenseService {
             throw new IllegalArgumentException("La categoría está inactiva");
         }
 
-        // 6. Validar que la categoría puede usarse para gastos
         if (!categoria.getTipo().puedeUsarseParaGastos()) {
             throw new IllegalArgumentException(
                     "La categoría '" + categoria.getNombre() + "' no puede usarse para gastos");
         }
 
-        // 7. Crear el gasto
-        Expense expense = new Expense();
-        expense.setMonto(dto.getMonto());
-        expense.setDescripcion(dto.getDescripcion());
-        expense.setFechaGasto(dto.getFechaGasto());
-        expense.setUsuario(usuario);
-        expense.setPresupuesto(presupuesto);
-        expense.setCategoria(categoria);
+        // 6. Obtener empresa si viene el ID (opcional)
+        Empresa empresa = null;
+        if (dto.getEmpresaId() != null) {
+            empresa = empresaRepo.findById(dto.getEmpresaId())
+                    .orElse(null);
+        }
+
+        // 7. ✅ Crear el gasto usando Builder
+        Expense expense = Expense.builder()
+                .monto(dto.getMonto())
+                .descripcion(dto.getDescripcion())
+                .fechaGasto(dto.getFechaGasto())
+                .usuario(usuario)
+                .presupuesto(presupuesto)
+                .categoria(categoria)
+                .empresa(empresa)
+                .metodoPago(dto.getMetodoPago() != null ? dto.getMetodoPago() : PaymentMethod.CASH)
+                .notas(dto.getNotas())
+                .build();
 
         Expense saved = expenseRepo.save(expense);
         log.info("Gasto creado con ID: {}", saved.getId());
@@ -96,9 +96,6 @@ public class ExpenseService {
     // CONSULTAS
     // ==========================================
 
-    /**
-     * Obtiene todos los gastos de un presupuesto
-     */
     @Transactional(readOnly = true)
     public List<ExpenseResponseDTO> getExpensesByPresupuesto(Long presupuestoId) {
         log.info("Obteniendo gastos del presupuesto ID: {}", presupuestoId);
@@ -113,9 +110,6 @@ public class ExpenseService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Obtiene todos los gastos de un usuario
-     */
     @Transactional(readOnly = true)
     public List<ExpenseResponseDTO> getExpensesByUsuario(Long usuarioId) {
         log.info("Obteniendo gastos del usuario ID: {}", usuarioId);
@@ -130,9 +124,6 @@ public class ExpenseService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Obtiene gastos de un usuario en un rango de fechas
-     */
     @Transactional(readOnly = true)
     public List<ExpenseResponseDTO> getExpensesByUsuarioAndDateRange(
             Long usuarioId,
@@ -155,9 +146,6 @@ public class ExpenseService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Obtiene un gasto específico por ID
-     */
     @Transactional(readOnly = true)
     public ExpenseResponseDTO getExpenseById(Long id) {
         log.info("Obteniendo gasto con ID: {}", id);
@@ -168,9 +156,6 @@ public class ExpenseService {
         return convertirAResponse(expense);
     }
 
-    /**
-     * Obtiene gastos de un presupuesto por categoría
-     */
     @Transactional(readOnly = true)
     public List<ExpenseResponseDTO> getExpensesByPresupuestoAndCategoria(
             Long presupuestoId,
@@ -196,17 +181,12 @@ public class ExpenseService {
     // ACTUALIZACIÓN
     // ==========================================
 
-    /**
-     * Actualiza un gasto existente
-     */
     public ExpenseResponseDTO updateExpense(Long id, ExpenseDTO dto) {
         log.info("Actualizando gasto ID: {}", id);
 
         // 1. Obtener gasto existente
         Expense expense = expenseRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Gasto no encontrado con ID: " + id));
-
-        BigDecimal montoAnterior = expense.getMonto();
 
         // 2. Validar y obtener nuevo presupuesto
         Presupuesto nuevoPresupuesto = presupuestoRepo.findById(dto.getPresupuestoId())
@@ -230,12 +210,22 @@ public class ExpenseService {
             throw new IllegalArgumentException("La categoría no puede usarse para gastos");
         }
 
-        // 5. Actualizar campos
+        // 5. Obtener empresa si viene el ID (opcional)
+        Empresa empresa = null;
+        if (dto.getEmpresaId() != null) {
+            empresa = empresaRepo.findById(dto.getEmpresaId())
+                    .orElse(null);
+        }
+
+        // 6. Actualizar campos
         expense.setMonto(dto.getMonto());
         expense.setDescripcion(dto.getDescripcion());
         expense.setFechaGasto(dto.getFechaGasto());
         expense.setPresupuesto(nuevoPresupuesto);
         expense.setCategoria(nuevaCategoria);
+        expense.setEmpresa(empresa);
+        expense.setMetodoPago(dto.getMetodoPago() != null ? dto.getMetodoPago() : PaymentMethod.CASH);
+        expense.setNotas(dto.getNotas());
 
         Expense updated = expenseRepo.save(expense);
         log.info("Gasto actualizado: ID={}", id);
@@ -247,9 +237,6 @@ public class ExpenseService {
     // ELIMINACIÓN
     // ==========================================
 
-    /**
-     * Elimina un gasto
-     */
     public void deleteExpense(Long id) {
         log.info("Eliminando gasto ID: {}", id);
 
@@ -271,9 +258,6 @@ public class ExpenseService {
     // MÉTODO AUXILIAR
     // ==========================================
 
-    /**
-     * Convierte una entidad Expense a ExpenseResponseDTO
-     */
     private ExpenseResponseDTO convertirAResponse(Expense expense) {
         return ExpenseResponseDTO.builder()
                 .id(expense.getId())
@@ -288,7 +272,7 @@ public class ExpenseService {
                 .categoriaColor(expense.getCategoria().getColor())
                 .usuarioId(expense.getUsuario().getId())
                 .usuarioNombre(expense.getUsuario().getNombre())
-                .fechaCreacion(expense.getFechaCreacion()) // ✅ Corregido
+                .fechaCreacion(expense.getFechaCreacion())
                 .build();
     }
 }

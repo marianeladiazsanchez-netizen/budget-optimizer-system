@@ -13,10 +13,6 @@ import java.util.List;
 @Repository
 public interface ExpenseRepository extends JpaRepository<Expense, Long> {
     
-    // ==========================================
-    // QUERY METHODS AUTOMÁTICOS
-    // ==========================================
-    
     // Por usuario
     List<Expense> findByUsuarioId(Long usuarioId);
     List<Expense> findByUsuarioIdOrderByFechaGastoDesc(Long usuarioId);
@@ -28,8 +24,10 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
     List<Expense> findByCategoriaId(Long categoriaId);
     List<Expense> findByUsuarioIdAndCategoriaId(Long usuarioId, Long categoriaId);
     
-    // ⭐ NUEVOS: Combinaciones para filtros avanzados
+    // ✅ AGREGADO: Combinación presupuesto y categoría
     List<Expense> findByPresupuestoIdAndCategoriaId(Long presupuestoId, Long categoriaId);
+    
+    // ✅ AGREGADO: Presupuesto y rango de fechas
     List<Expense> findByPresupuestoIdAndFechaGastoBetween(Long presupuestoId, LocalDateTime inicio, LocalDateTime fin);
     
     // Por empresa
@@ -53,10 +51,7 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
     List<Expense> findByDescripcionContainingIgnoreCase(String keyword);
     List<Expense> findByUsuarioIdAndDescripcionContainingIgnoreCase(Long usuarioId, String keyword);
     
-    // ==========================================
-    // @Query PARA AGREGACIONES Y CÁLCULOS
-    // ==========================================
-    
+    // Agregaciones
     @Query("SELECT COALESCE(SUM(e.monto), 0) FROM Expense e WHERE e.presupuesto.id = :presupuestoId")
     Double sumMontoByPresupuestoId(@Param("presupuestoId") Long presupuestoId);
     

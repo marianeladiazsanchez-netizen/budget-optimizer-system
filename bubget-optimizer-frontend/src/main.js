@@ -1,10 +1,29 @@
-// simulacion de datos 
+/**
+ * ============================================
+ * MAIN.JS - BUDGET OPTIMIZER
+ * ============================================
+ * Versión REFACTORIZADA con Backend integrado
+ */
+
+// ============================================
+// 📦 IMPORTS
+// ============================================
+import usuarioService from './api/services/usuarioService.js';
+import { 
+  showFieldError, 
+  clearFormErrors, 
+  showError, 
+  showSuccess,
+  isValidEmail,
+  validatePassword
+} from './utils/errorHandler.js';
+
+// ============================================
+// 🗂️ DATOS MOCK
+// ============================================
 const mockProducts = [
   {
-    id: 1,
-    name: 'iPhone 15',
-    image: '',
-    category: 'Electrónica',
+    id: 1, name: 'iPhone 15', image: '📱', category: 'Electrónica',
     prices: [
       { store: 'Amazon', price: 999 },
       { store: 'Best Buy', price: 1019 },
@@ -12,10 +31,7 @@ const mockProducts = [
     ]
   },
   {
-    id: 2,
-    name: 'Zapatillas Nike',
-    image: '',
-    category: 'Ropa',
+    id: 2, name: 'Zapatillas Nike', image: '👟', category: 'Ropa',
     prices: [
       { store: 'Amazon', price: 120 },
       { store: 'Nike Store', price: 140 },
@@ -23,10 +39,7 @@ const mockProducts = [
     ]
   },
   {
-    id: 3,
-    name: 'Laptop HP',
-    image: '',
-    category: 'Electrónica',
+    id: 3, name: 'Laptop HP', image: '💻', category: 'Electrónica',
     prices: [
       { store: 'Amazon', price: 599 },
       { store: 'Best Buy', price: 579 },
@@ -34,58 +47,224 @@ const mockProducts = [
     ]
   },
   {
-    id: 4,
-    name: 'Sofá gris',
-    image: '',
-    category: 'Muebles',
+    id: 4, name: 'Sofá gris', image: '🛋️', category: 'Muebles',
     prices: [
       { store: 'IKEA', price: 299 },
       { store: 'Wayfair', price: 319 },
       { store: 'Amazon', price: 289 }
     ]
-  },
-  {
-    id: 5,
-    name: 'Café Premium',
-    image: '',
-    category: 'Alimentos',
-    prices: [
-      { store: 'Amazon', price: 12.99 },
-      { store: 'Whole Foods', price: 14.99 },
-      { store: 'Local Store', price: 11.99 }
-    ]
-  },
-  {
-    id: 6,
-    name: 'Auriculares Sony',
-    image: '',
-    category: 'Electrónica',
-    prices: [
-      { store: 'Amazon', price: 349 },
-      { store: 'Best Buy', price: 349 },
-      { store: 'B&H', price: 339 }
-    ]
   }
 ];
 
+// ============================================
+// 🌍 VARIABLES GLOBALES
+// ============================================
 let currentProducts = [...mockProducts];
 let selectedProduct = null;
 let currentUser = null;
 
-// inicializacion 
+// Gráficas
+let expensesChart = null;
+let trendChart = null;
+let distributionChart = null;
+
+// ============================================
+// 🚀 INICIALIZACIÓN
+// ============================================
 document.addEventListener('DOMContentLoaded', () => {
+  console.log('🚀 Iniciando Budget Optimizer...');
   initApp();
   setupEventListeners();
 });
 
 function initApp() {
-  currentUser = JSON.parse(localStorage.getItem('currentUser'));
+  currentUser = usuarioService.getCurrentUser();
+  
   if (currentUser) {
+    console.log('✅ Usuario en sesión:', currentUser.email);
     goToDashboard();
+  } else {
+    console.log('ℹ️ No hay sesión activa');
   }
 }
 
-// navegacion
+// ============================================
+// 🎯 EVENT LISTENERS - SIN ONCLICK INLINE
+// ============================================
+function setupEventListeners() {
+  // Autenticación
+  document.getElementById('form-login')?.addEventListener('submit', handleLogin);
+  document.getElementById('form-register')?.addEventListener('submit', handleRegister);
+  
+  // Botones de navegación
+  document.getElementById('btn-open-auth')?.addEventListener('click', openAuthOverlay);
+  document.getElementById('btn-go-comparador')?.addEventListener('click', goToComparador);
+  document.getElementById('btn-logout')?.addEventListener('click', handleLogout);
+  
+  // Modales
+  document.getElementById('close-login')?.addEventListener('click', closeAuthOverlay);
+  document.getElementById('close-register')?.addEventListener('click', closeAuthOverlay);
+  document.getElementById('switch-to-register')?.addEventListener('click', switchToRegister);
+  document.getElementById('switch-to-login')?.addEventListener('click', switchToLogin);
+  
+  // Navegación lateral
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => navigateTo(item.dataset.page));
+  });
+
+  // Búsqueda
+  document.getElementById('btn-search')?.addEventListener('click', handleSearch);
+  document.getElementById('search-input')?.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') handleSearch();
+  });
+  
+  // Botones de acciones
+  document.getElementById('btn-add-budget')?.addEventListener('click', openAddBudget);
+  document.getElementById('btn-add-transaction')?.addEventListener('click', openAddTransaction);
+}
+
+// ============================================
+// 🔐 AUTENTICACIÓN
+// ============================================
+async function handleRegister(e) {
+  e.preventDefault();
+  clearFormErrors('form-register');
+  
+  try {
+    const nombre = document.getElementById('register-name').value.trim();
+    const email = document.getElementById('register-email').value.trim();
+    const password = document.getElementById('register-password').value;
+    
+    // Validaciones frontend
+    if (!nombre || nombre.length < 2) {
+      showFieldError('register-name', 'El nombre debe tener al menos 2 caracteres');
+      return;
+    }
+    
+    if (!isValidEmail(email)) {
+      showFieldError('register-email', 'El email no es válido');
+      return;
+    }
+    
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+      showFieldError('register-password', passwordValidation.errors[0]);
+      return;
+    }
+    
+    // Datos para el backend
+    const userData = {
+      nombre,
+      email,
+      password,
+      ciudad: 'Cartagena',
+      pais: 'Colombia',
+      presupuestoMensualBase: 5000.00,
+      latitud: 10.4236,
+      longitud: -75.5223
+    };
+    
+    console.log('📤 Registrando usuario...', { email });
+    
+    const usuario = await usuarioService.registrar(userData);
+    
+    console.log('✅ Usuario registrado:', usuario);
+    showSuccess('¡Registro exitoso! Por favor inicia sesión.');
+    
+    document.getElementById('form-register').reset();
+    switchToLogin();
+    
+  } catch (error) {
+    console.error('❌ Error en registro:', error);
+    
+    if (error.response?.status === 409) {
+      showFieldError('register-email', 'Este email ya está registrado');
+    } else {
+      showError(error, 'al registrar usuario');
+    }
+  }
+}
+
+async function handleLogin(e) {
+  e.preventDefault();
+  clearFormErrors('form-login');
+  
+  try {
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    
+    if (!email || !password) {
+      showFieldError('login-email', 'Todos los campos son requeridos');
+      return;
+    }
+    
+    if (!isValidEmail(email)) {
+      showFieldError('login-email', 'El email no es válido');
+      return;
+    }
+    
+    console.log('📤 Intentando login...', { email });
+    
+    const usuario = await usuarioService.login(email, password);
+    
+    currentUser = usuario;
+    
+    console.log('✅ Login exitoso:', usuario.email);
+    document.getElementById('form-login').reset();
+    closeAuthOverlay();
+    goToDashboard();
+    
+    alert(`¡Bienvenido, ${usuario.nombre}! 🎉`);
+    
+  } catch (error) {
+    console.error('❌ Error en login:', error);
+    
+    if (error.response?.status === 404) {
+      showFieldError('login-email', 'Usuario no encontrado');
+    } else {
+      showFieldError('login-password', 'Email o contraseña incorrectos');
+    }
+  }
+}
+
+function handleLogout() {
+  if (!confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+    return;
+  }
+  
+  usuarioService.logout();
+  currentUser = null;
+  
+  document.getElementById('landing-page').classList.add('active');
+  document.getElementById('app-layout').classList.add('hidden');
+  
+  console.log('✅ Sesión cerrada');
+}
+
+// ============================================
+// 🎨 UI - OVERLAYS
+// ============================================
+function openAuthOverlay() {
+  document.getElementById('auth-overlay')?.classList.add('active');
+}
+
+function closeAuthOverlay() {
+  document.getElementById('auth-overlay')?.classList.remove('active');
+}
+
+function switchToRegister() {
+  document.getElementById('login-form')?.classList.add('hidden');
+  document.getElementById('register-form')?.classList.remove('hidden');
+}
+
+function switchToLogin() {
+  document.getElementById('register-form')?.classList.add('hidden');
+  document.getElementById('login-form')?.classList.remove('hidden');
+}
+
+// ============================================
+// 🧭 NAVEGACIÓN
+// ============================================
 function goToComparador() {
   if (!currentUser) {
     openAuthOverlay();
@@ -102,136 +281,43 @@ function goToDashboard() {
 
 function navigateTo(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById(page + '-page').classList.add('active');
+  document.getElementById(page + '-page')?.classList.add('active');
   
   document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-  document.querySelector(`[data-page="${page}"]`).classList.add('active');
+  document.querySelector(`[data-page="${page}"]`)?.classList.add('active');
   
-  if (page === 'comparador') {
-    renderProducts();
-    loadChart();
-  } else if (page === 'dashboard') {
-    loadDashboardData();
-  } else if (page === 'reports') {
-    loadReports();
+  switch (page) {
+    case 'comparador':
+      renderProducts();
+      loadChart();
+      break;
+    case 'dashboard':
+      loadDashboardData();
+      break;
+    case 'reports':
+      loadReports();
+      break;
   }
 }
 
 function showAppLayout() {
-  document.getElementById('landing-page').classList.remove('active');
-  document.getElementById('app-layout').classList.remove('hidden');
-  document.getElementById('user-name-display').textContent = currentUser.name;
-}
-
-// event listener
-function setupEventListeners() {
-  document.getElementById('form-login').addEventListener('submit', handleLogin);
-  document.getElementById('form-register').addEventListener('submit', handleRegister);
+  document.getElementById('landing-page')?.classList.remove('active');
+  document.getElementById('app-layout')?.classList.remove('hidden');
   
-  document.querySelectorAll('.nav-item').forEach(item => {
-    item.addEventListener('click', () => {
-      navigateTo(item.dataset.page);
-    });
-  });
-
-  document.getElementById('search-input').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') handleSearch();
-  });
-}
-
-// autenticacion 
-function openAuthOverlay() {
-  document.getElementById('auth-overlay').classList.add('active');
-}
-
-function closeAuthOverlay() {
-  document.getElementById('auth-overlay').classList.remove('active');
-}
-
-function switchToRegister() {
-  document.getElementById('login-form').classList.add('hidden');
-  document.getElementById('register-form').classList.remove('hidden');
-}
-
-function switchToLogin() {
-  document.getElementById('register-form').classList.add('hidden');
-  document.getElementById('login-form').classList.remove('hidden');
-}
-
-function handleLogin(e) {
-  e.preventDefault();
-  
-  const email = document.getElementById('login-email').value.trim();
-  const password = document.getElementById('login-password').value;
-  
-  const users = JSON.parse(localStorage.getItem('users')) || [];
-  const user = users.find(u => u.email === email && u.password === password);
-  
-  if (user) {
-    currentUser = user;
-    localStorage.setItem('currentUser', JSON.stringify(user));
-    document.getElementById('form-login').reset();
-    closeAuthOverlay();
-    goToDashboard();
-    alert('Sesión iniciada correctamente ;D');
-  } else {
-    showError('login-password', 'Email o contraseña incorrectos');
+  if (currentUser) {
+    const nameDisplay = document.getElementById('user-name-display');
+    if (nameDisplay) {
+      nameDisplay.textContent = currentUser.nombre || currentUser.name;
+    }
   }
 }
 
-function handleRegister(e) {
-  e.preventDefault();
-  
-  const name = document.getElementById('register-name').value.trim();
-  const email = document.getElementById('register-email').value.trim();
-  const password = document.getElementById('register-password').value;
-  
-  if (!name || !email || !password) {
-    showError('register-name', 'Todos los campos son requeridos');
-    return;
-  }
-  
-  const users = JSON.parse(localStorage.getItem('users')) || [];
-  
-  if (users.some(u => u.email === email)) {
-    showError('register-email', 'Este email ya está registrado');
-    return;
-  }
-  
-  if (password.length < 6) {
-    showError('register-password', 'La contraseña debe tener al menos 6 caracteres');
-    return;
-  }
-  
-  const newUser = {
-    id: Date.now(),
-    name,
-    email,
-    password,
-    income: 0,
-    expenses: []
-  };
-  
-  users.push(newUser);
-  localStorage.setItem('users', JSON.stringify(users));
-  
-  alert('Registro exitoso. Por favor inicia sesión');
-  switchToLogin();
-  document.getElementById('form-register').reset();
-}
-
-function handleLogout() {
-  if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
-    localStorage.removeItem('currentUser');
-    currentUser = null;
-    document.getElementById('landing-page').classList.add('active');
-    document.getElementById('app-layout').classList.add('hidden');
-  }
-}
-
-// comparador 
+// ============================================
+// 🛒 COMPARADOR DE PRODUCTOS
+// ============================================
 function renderProducts() {
   const container = document.getElementById('products-list');
+  if (!container) return;
   
   if (currentProducts.length === 0) {
     container.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #999;">No se encontraron productos</p>';
@@ -239,12 +325,20 @@ function renderProducts() {
   }
 
   container.innerHTML = currentProducts.map(product => `
-    <div class="product-card" onclick="selectProduct(${product.id})">
+    <div class="product-card" data-product-id="${product.id}">
       <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">${product.image}</div>
       <h4>${product.name}</h4>
       <p>$${Math.min(...product.prices.map(p => p.price)).toFixed(2)}</p>
     </div>
   `).join('');
+  
+  // ✅ Event delegation en lugar de onclick inline
+  container.querySelectorAll('.product-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const productId = parseInt(card.dataset.productId);
+      selectProduct(productId);
+    });
+  });
 }
 
 function selectProduct(productId) {
@@ -252,7 +346,7 @@ function selectProduct(productId) {
   if (!selectedProduct) return;
 
   document.querySelectorAll('.product-card').forEach(card => card.classList.remove('selected'));
-  event.target.closest('.product-card').classList.add('selected');
+  document.querySelector(`[data-product-id="${productId}"]`)?.classList.add('selected');
 
   const detailHtml = `
     <div style="text-align: center;">
@@ -262,7 +356,11 @@ function selectProduct(productId) {
       <p style="color: #999; margin-bottom: 1.5rem;">Compara precios en todas las tiendas</p>
     </div>
   `;
-  document.getElementById('product-detail').innerHTML = detailHtml;
+  
+  const detailContainer = document.getElementById('product-detail');
+  if (detailContainer) {
+    detailContainer.innerHTML = detailHtml;
+  }
 
   showComparison(selectedProduct);
   updateStats(selectedProduct);
@@ -270,8 +368,9 @@ function selectProduct(productId) {
 
 function showComparison(product) {
   const container = document.getElementById('comparison-list');
+  if (!container) return;
+  
   const sorted = [...product.prices].sort((a, b) => a.price - b.price);
-  const bestPrice = sorted[0].price;
   
   container.innerHTML = sorted.map((item, index) => `
     <div class="store-item">
@@ -296,7 +395,10 @@ function updateStats(product) {
 }
 
 function handleSearch() {
-  const searchTerm = document.getElementById('search-input').value.trim().toLowerCase();
+  const searchInput = document.getElementById('search-input');
+  if (!searchInput) return;
+  
+  const searchTerm = searchInput.value.trim().toLowerCase();
   
   if (!searchTerm) {
     currentProducts = [...mockProducts];
@@ -309,15 +411,18 @@ function handleSearch() {
   
   renderProducts();
   selectedProduct = null;
+  
   document.getElementById('product-detail').innerHTML = '<p style="color: #999; text-align: center; padding: 2rem;"><i class="fas fa-inbox"></i> Selecciona un producto</p>';
   document.getElementById('comparison-list').innerHTML = '<p style="color: #999; text-align: center; padding: 1.5rem;"><i class="fas fa-inbox"></i> No hay comparación</p>';
 }
 
-//  dashboard
+// ============================================
+// 📊 DASHBOARD
+// ============================================
 function loadDashboardData() {
-  const expenses = currentUser.expenses || [];
+  const expenses = currentUser?.expenses || [];
   const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
-  const totalIncome = currentUser.income || 0;
+  const totalIncome = currentUser?.income || 0;
   const savings = totalIncome - totalExpenses;
 
   document.getElementById('total-income').textContent = `$${totalIncome.toFixed(2)}`;
@@ -327,60 +432,41 @@ function loadDashboardData() {
   loadExpensesChart();
 }
 
-let expensesChart = null;
-
+// ============================================
+// 📈 GRÁFICAS
+// ============================================
 function loadExpensesChart() {
-  const expenses = currentUser.expenses || [];
-  const categoriesData = {
-    'alimentación': 0,
-    'transporte': 0,
-    'vivienda': 0,
-    'entretenimiento': 0,
-    'salud': 0,
-    'otro': 0
-  };
-
-  expenses.forEach(exp => {
-    if (categoriesData.hasOwnProperty(exp.category)) {
-      categoriesData[exp.category] += exp.amount;
-    }
-  });
-
-  const ctx = document.getElementById('expenses-chart').getContext('2d');
+  const canvas = document.getElementById('expenses-chart');
+  if (!canvas) return;
   
   if (expensesChart) expensesChart.destroy();
   
+  const ctx = canvas.getContext('2d');
   expensesChart = new Chart(ctx, {
     type: 'doughnut',
     data: {
-      labels: Object.keys(categoriesData).map(c => c.charAt(0).toUpperCase() + c.slice(1)),
+      labels: ['Alimentación', 'Transporte', 'Vivienda'],
       datasets: [{
-        data: Object.values(categoriesData),
-        backgroundColor: ['#4f46e5', '#6366f1', '#a5b4fc', '#c7d2fe', '#ddd6fe', '#ede9fe'],
+        data: [1200, 400, 800],
+        backgroundColor: ['#4f46e5', '#6366f1', '#a5b4fc'],
         borderColor: '#fff',
         borderWidth: 2
       }]
     },
     options: {
       responsive: true,
-      plugins: {
-        legend: {
-          position: 'bottom'
-        }
-      }
+      plugins: { legend: { position: 'bottom' } }
     }
   });
 }
 
-//  grafica
-let trendChart = null;
-let distributionChart = null;
-
 function loadChart() {
-  const ctx = document.getElementById('trend-chart').getContext('2d');
+  const canvas = document.getElementById('trend-chart');
+  if (!canvas) return;
   
   if (trendChart) trendChart.destroy();
   
+  const ctx = canvas.getContext('2d');
   trendChart = new Chart(ctx, {
     type: 'line',
     data: {
@@ -392,28 +478,23 @@ function loadChart() {
         backgroundColor: 'rgba(79, 70, 229, 0.1)',
         borderWidth: 3,
         fill: true,
-        tension: 0.4,
-        pointBackgroundColor: '#4f46e5',
-        pointBorderColor: '#fff',
-        pointBorderWidth: 2,
-        pointRadius: 5
+        tension: 0.4
       }]
     },
     options: {
       responsive: true,
-      plugins: { legend: { display: false } },
-      scales: {
-        y: { beginAtZero: true, grid: { drawBorder: false } }
-      }
+      plugins: { legend: { display: false } }
     }
   });
 }
 
 function updateDistributionChart(product) {
-  const ctx = document.getElementById('distribution-chart').getContext('2d');
+  const canvas = document.getElementById('distribution-chart');
+  if (!canvas) return;
   
   if (distributionChart) distributionChart.destroy();
   
+  const ctx = canvas.getContext('2d');
   const stores = product.prices.map(p => p.store);
   const prices = product.prices.map(p => p.price);
   
@@ -435,31 +516,28 @@ function updateDistributionChart(product) {
   });
 }
 
-// presupuestos
+// ============================================
+// 💰 PRESUPUESTOS Y TRANSACCIONES
+// ============================================
 function openAddBudget() {
-  alert(' Funcionalidad para agregar presupuestos');
+  alert('📋 Funcionalidad de presupuestos próximamente');
 }
 
-// trnasaacciones
 function openAddTransaction() {
-  alert(' Funcionalidad para agregar transacciones');
+  alert('💸 Funcionalidad de transacciones próximamente');
 }
 
-// reportes
 function loadReports() {
-  // Charts para reportes
+  console.log('📊 Cargando reportes...');
 }
 
-// utilidades
-function showError(inputId, message) {
-  const input = document.getElementById(inputId);
-  const errorDiv = input.nextElementSibling;
-  errorDiv.textContent = message;
-  errorDiv.style.display = 'block';
-  input.style.borderColor = '#ef4444';
-  
-  setTimeout(() => {
-    errorDiv.style.display = 'none';
-    input.style.borderColor = '#e5e7eb';
-  }, 3000);
-}
+// ============================================
+// 📝 LOG FINAL
+// ============================================
+console.log(`
+✅ Main.js cargado
+📦 Módulos conectados:
+   - ✅ Usuarios (Backend)
+   - ⚠️ Presupuestos (Pendiente)
+   - ⚠️ Gastos (Pendiente)
+`);

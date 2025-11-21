@@ -12,7 +12,7 @@
 <!-- AUTH OVERLAY -->
 <div class="auth-overlay" id="auth-overlay">
     <div id="login-form" class="auth-card">
-        <div class="auth-close" onclick="closeAuthOverlay()"><i class="fas fa-times"></i></div>
+        <div class="auth-close" id="close-login"><i class="fas fa-times"></i></div>
         <h2>Inicia sesión</h2>
         <form id="form-login">
             <div class="form-group">
@@ -27,11 +27,11 @@
             </div>
             <button type="submit" class="btn btn-primary">Iniciar sesión</button>
         </form>
-        <div class="auth-toggle">¿No tienes cuenta? <a onclick="switchToRegister()">Regístrate</a></div>
+        <div class="auth-toggle">¿No tienes cuenta? <a id="switch-to-register">Regístrate</a></div>
     </div>
 
     <div id="register-form" class="auth-card hidden">
-        <div class="auth-close" onclick="closeAuthOverlay()"><i class="fas fa-times"></i></div>
+        <div class="auth-close" id="close-register"><i class="fas fa-times"></i></div>
         <h2>Crear cuenta</h2>
         <form id="form-register">
             <div class="form-group">
@@ -51,7 +51,7 @@
             </div>
             <button type="submit" class="btn btn-primary">Registrarse</button>
         </form>
-        <div class="auth-toggle">¿Ya tienes cuenta? <a onclick="switchToLogin()">Inicia sesión</a></div>
+        <div class="auth-toggle">¿Ya tienes cuenta? <a id="switch-to-login">Inicia sesión</a></div>
     </div>
 </div>
 
@@ -59,13 +59,13 @@
 <div id="landing-page" class="page-wrapper active">
     <nav class="landing-nav">
         <div class="nav-brand">Budget<span>Optimizer</span></div>
-        <button class="btn-nav-login" onclick="openAuthOverlay()">Iniciar sesión</button>
+        <button class="btn-nav-login" id="btn-open-auth">Iniciar sesión</button>
     </nav>
 
     <section class="landing-hero">
         <h1>Budget Optimizer</h1>
         <p>Compara precios en tiempo real y ahorra dinero</p>
-        <button class="btn btn-large" onclick="goToComparador()">Comenzar ahora</button>
+        <button class="btn btn-large" id="btn-go-comparador">Comenzar ahora</button>
     </section>
 </div>
 
@@ -105,7 +105,7 @@
         <div class="sidebar-footer">
             <div class="user-info">
                 <p id="user-name-display">Usuario</p>
-                <button class="btn-logout" onclick="handleLogout()">
+                <button class="btn-logout" id="btn-logout">
                     <i class="fas fa-sign-out-alt"></i> Salir
                 </button>
             </div>
@@ -119,7 +119,7 @@
             <header class="page-header">
                 <div class="search-container">
                     <input type="text" id="search-input" placeholder="Busca un producto..." class="search-input">
-                    <button class="btn-search" onclick="handleSearch()">
+                    <button class="btn-search" id="btn-search">
                         <i class="fas fa-search"></i>
                     </button>
                 </div>
@@ -193,7 +193,7 @@
             </div>
         </section>
 
-        <!-- dashboar -->
+        <!-- dashboard -->
         <section id="dashboard-page" class="page">
             <div class="page-header">
                 <h1>Dashboard</h1>
@@ -225,11 +225,11 @@
             </div>
         </section>
 
-        <!-- butged-->
+        <!-- budget-->
         <section id="budgets-page" class="page">
             <div class="page-header">
                 <h1>Presupuestos</h1>
-                <button class="btn btn-primary" onclick="openAddBudget()">
+                <button class="btn btn-primary" id="btn-add-budget">
                     <i class="fas fa-plus"></i> Nuevo presupuesto
                 </button>
             </div>
@@ -243,7 +243,7 @@
         <section id="transactions-page" class="page">
             <div class="page-header">
                 <h1>Transacciones</h1>
-                <button class="btn btn-primary" onclick="openAddTransaction()">
+                <button class="btn btn-primary" id="btn-add-transaction">
                     <i class="fas fa-plus"></i> Nueva transacción
                 </button>
             </div>
@@ -275,7 +275,9 @@
     </main>
 </div>
 
+<!-- ✅ SCRIPTS CORRECTOS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-<script src="./main.js"></script>
+<!-- ✅ TYPE="MODULE" para que funcionen los imports -->
+<script type="module" src="./main.js"></script>
 </body>
 </html>

@@ -285,8 +285,6 @@ class AuthController {
     }
 }
 
-// Nota: DashboardController ahora está en dashboard.js
-
 // ==========================================
 // 🎬 INICIALIZACIÓN
 // ==========================================
@@ -354,15 +352,33 @@ document.addEventListener('DOMContentLoaded', () => {
     // 🔗 EVENT LISTENERS - NAVEGACIÓN
     // ==========================================
     document.querySelectorAll('.nav-item').forEach(item => {
-        item.addEventListener('click', () => {
+        item.addEventListener('click', async () => {
             const page = item.getAttribute('data-page');
             UIManager.showPage(page);
 
-            // Cargar datos según la página
+            // ✅ FIXED: Cargar datos según la página
             if (page === 'dashboard-page') {
-                window.dashboardController?.cargarDashboard();
+                console.log('📊 Cargando Dashboard...');
+                if (window.dashboardController) {
+                    await window.dashboardController.cargarDashboard();
+                } else {
+                    console.error('❌ dashboardController no está disponible');
+                }
             } else if (page === 'budgets-page') {
-                window.presupuestosController?.inicializar();
+                console.log('💰 Cargando Presupuestos...');
+                if (window.presupuestosController) {
+                    await window.presupuestosController.inicializar();
+                } else {
+                    console.error('❌ presupuestosController no está disponible');
+                }
+            } else if (page === 'transactions-page') {
+                console.log('💸 Cargando Gastos...');
+                // ✅ NUEVO: Inicializar módulo de gastos
+                if (window.gastosController) {
+                    await window.gastosController.inicializar();
+                } else {
+                    console.error('❌ gastosController no está disponible');
+                }
             }
         });
     });

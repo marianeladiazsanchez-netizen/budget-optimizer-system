@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Budget Optimizer - Comparador de Precios</title>
 
-    <!-- ✅ Favicon -->
+    <!-- Favicon -->
     <link rel="icon"
         href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75' fill='%234f46e5'>💰</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -15,7 +14,6 @@
 </head>
 
 <body>
-
     <!-- AUTH OVERLAY -->
     <div class="auth-overlay" id="auth-overlay">
         <div id="login-form" class="auth-card">
@@ -265,15 +263,15 @@
     </div>
 
     <!-- ✅ CRITICAL: Load external libraries FIRST -->
-    <!-- ✅ CRITICAL: Load external libraries FIRST -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.8/axios.min.js"></script>
 
-    <!-- ✅ AGREGAR ESTOS DOS -->
+    <!-- ✅ FIXED: Load modules BEFORE main.js -->
     <script src="./src/dashboard.js"></script>
     <script src="./src/presupuestos.js"></script>
+    <script src="./src/gastos.js"></script>
 
-    <!-- ✅ Then load the app -->
+    <!-- ✅ Then load main app -->
     <script type="module" src="./src/main.js"></script>
 </body>
 

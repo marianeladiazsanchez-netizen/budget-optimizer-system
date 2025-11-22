@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Budget Optimizer - Comparador de Precios</title>
+    
+    <!-- ✅ Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75' fill='%234f46e5'>💰</text></svg>">
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="./style.css" />
 </head>
@@ -55,7 +59,7 @@
     </div>
 </div>
 
-<!-- pagina de inicio  -->
+<!-- Página de inicio -->
 <div id="landing-page" class="page-wrapper active">
     <nav class="landing-nav">
         <div class="nav-brand">Budget<span>Optimizer</span></div>
@@ -69,14 +73,13 @@
     </section>
 </div>
 
-<!-- app layout -->
+<!-- App layout -->
 <div id="app-layout" class="app-layout hidden">
-    <!-- barra lateral -->
+    <!-- Sidebar -->
     <aside class="sidebar">
         <div class="sidebar-header">
             <h1>Budget<span>Optimizer</span></h1>
         </div>
-
         <nav class="sidebar-menu">
             <ul>
                 <li class="nav-item active" data-page="comparador">
@@ -101,7 +104,6 @@
                 </li>
             </ul>
         </nav>
-
         <div class="sidebar-footer">
             <div class="user-info">
                 <p id="user-name-display">Usuario</p>
@@ -112,9 +114,9 @@
         </div>
     </aside>
 
-    <!-- contenido principal  -->
+    <!-- Main content -->
     <main class="main-content">
-        <!-- comparador de precios -->
+        <!-- Comparador -->
         <section id="comparador-page" class="page active">
             <header class="page-header">
                 <div class="search-container">
@@ -124,53 +126,34 @@
                     </button>
                 </div>
             </header>
-
             <div class="comparador-content">
                 <div class="results-section">
                     <div class="stats-grid">
-                        <div class="stat-card">
-                            <h3>425</h3>
-                            <p>Productos</p>
-                        </div>
-                        <div class="stat-card">
-                            <h3>365</h3>
-                            <p>Tiendas</p>
-                        </div>
-                        <div class="stat-card">
-                            <h3>268</h3>
-                            <p>Comparaciones</p>
-                        </div>
+                        <div class="stat-card"><h3>425</h3><p>Productos</p></div>
+                        <div class="stat-card"><h3>365</h3><p>Tiendas</p></div>
+                        <div class="stat-card"><h3>268</h3><p>Comparaciones</p></div>
                     </div>
-
                     <div class="products-section">
                         <h2>Productos disponibles</h2>
                         <div id="products-list" class="products-grid"></div>
                     </div>
-
                     <div class="chart-section">
                         <h2>Tendencia de precios</h2>
                         <canvas id="trend-chart"></canvas>
                     </div>
                 </div>
-
                 <div class="comparison-section">
                     <div class="selected-product">
                         <div id="product-detail">
-                            <p style="color: #999; text-align: center; padding: 2rem;">
-                                <i class="fas fa-inbox"></i> Selecciona un producto
-                            </p>
+                            <p style="color: #999; text-align: center; padding: 2rem;"><i class="fas fa-inbox"></i> Selecciona un producto</p>
                         </div>
                     </div>
-
                     <div class="comparison-table">
                         <h3>Comparativa de precios</h3>
                         <div id="comparison-list">
-                            <p style="color: #999; text-align: center; padding: 1.5rem;">
-                                <i class="fas fa-inbox"></i> No hay comparación
-                            </p>
+                            <p style="color: #999; text-align: center; padding: 1.5rem;"><i class="fas fa-inbox"></i> No hay comparación</p>
                         </div>
                     </div>
-
                     <div class="right-stats">
                         <div class="stat-item">
                             <h4>Precio promedio</h4>
@@ -185,7 +168,6 @@
                             <p id="max-savings" class="price">$0.00</p>
                         </div>
                     </div>
-
                     <div class="mini-chart">
                         <canvas id="distribution-chart"></canvas>
                     </div>
@@ -193,12 +175,9 @@
             </div>
         </section>
 
-        <!-- dashboard -->
+        <!-- Dashboard -->
         <section id="dashboard-page" class="page">
-            <div class="page-header">
-                <h1>Dashboard</h1>
-            </div>
-
+            <div class="page-header"><h1>Dashboard</h1></div>
             <div class="dashboard-content">
                 <div class="cards">
                     <div class="card">
@@ -217,7 +196,6 @@
                         <p id="total-savings">$0.00</p>
                     </div>
                 </div>
-
                 <div class="chart-container">
                     <h3>Gastos por categoría</h3>
                     <canvas id="expenses-chart"></canvas>
@@ -225,40 +203,31 @@
             </div>
         </section>
 
-        <!-- budget-->
+        <!-- Budgets -->
         <section id="budgets-page" class="page">
             <div class="page-header">
                 <h1>Presupuestos</h1>
-                <button class="btn btn-primary" id="btn-add-budget">
-                    <i class="fas fa-plus"></i> Nuevo presupuesto
-                </button>
+                <button class="btn btn-primary" id="btn-add-budget"><i class="fas fa-plus"></i> Nuevo presupuesto</button>
             </div>
-
             <div class="content-box">
                 <div id="budgets-list" class="budgets-grid"></div>
             </div>
         </section>
 
-        <!-- transacciones -->
+        <!-- Transactions -->
         <section id="transactions-page" class="page">
             <div class="page-header">
                 <h1>Transacciones</h1>
-                <button class="btn btn-primary" id="btn-add-transaction">
-                    <i class="fas fa-plus"></i> Nueva transacción
-                </button>
+                <button class="btn btn-primary" id="btn-add-transaction"><i class="fas fa-plus"></i> Nueva transacción</button>
             </div>
-
             <div class="content-box">
                 <div id="transactions-list" class="transactions-table"></div>
             </div>
         </section>
 
-        <!-- reportes -->
+        <!-- Reports -->
         <section id="reports-page" class="page">
-            <div class="page-header">
-                <h1>Reportes</h1>
-            </div>
-
+            <div class="page-header"><h1>Reportes</h1></div>
             <div class="content-box">
                 <div class="reports-grid">
                     <div class="report-card">
@@ -275,9 +244,12 @@
     </main>
 </div>
 
-<!-- ✅ SCRIPTS CORRECTOS -->
+<!-- ✅ CRITICAL: Load external libraries FIRST -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-<!-- ✅ TYPE="MODULE" para que funcionen los imports -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.8/axios.min.js"></script>
+
+<!-- ✅ Then load the app -->
 <script type="module" src="./main.js"></script>
+
 </body>
 </html>

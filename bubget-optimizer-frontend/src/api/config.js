@@ -14,7 +14,7 @@
 
 export const API_CONFIG = {
   // ✅ Usa variable de entorno o fallback a localhost
-  BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:8080',
+  BASE_URL: import.meta.env.VITE_API_URL || 'http://budget-optimizer-backend-dev:8080',
   
   // Timeout de 15 segundos
   TIMEOUT: 15000,

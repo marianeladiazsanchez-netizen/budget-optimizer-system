@@ -1,97 +1,121 @@
 /**
  * Cliente HTTP base usando Axios
  * 
- * Este módulo centraliza todas las peticiones HTTP al backend.
- * Incluye:
- * - Configuración de Axios
- * - Interceptores para autenticación
- * - Manejo centralizado de errores
- * - Logging de peticiones
+ * IMPORTANTE: Este módulo se importa ANTES de que Axios esté disponible.
+ * Solución: Lazy-load el cliente
  */
 
 import { API_CONFIG } from './config.js';
 
 // ============================================
-// VERIFICACIÓN: Axios debe estar cargado globalmente
+// LAZY-LOADED API CLIENT
 // ============================================
-if (typeof axios === 'undefined') {
-  throw new Error('❌ Axios no está cargado. Asegúrate de incluir el script en index.html');
+let apiClient = null;
+let clientPromise = null;
+
+/**
+ * Obtiene la instancia del cliente API
+ * Espera a que Axios esté disponible si es necesario
+ */
+function getApiClient() {
+  if (apiClient) {
+    return apiClient;
+  }
+  
+  if (!clientPromise) {
+    clientPromise = initializeClient();
+  }
+  
+  return clientPromise;
+}
+
+/**
+ * Inicializa el cliente cuando Axios esté listo
+ */
+async function initializeClient() {
+  // Esperar a que Axios esté disponible (máx 5 segundos)
+  let attempts = 0;
+  while (typeof axios === 'undefined' && attempts < 50) {
+    await new Promise(r => setTimeout(r, 100));
+    attempts++;
+  }
+  
+  if (typeof axios === 'undefined') {
+    throw new Error('❌ Axios no se cargó correctamente. Verifica index.html');
+  }
+  
+  console.log('✅ Axios disponible, creando cliente API...');
+  
+  apiClient = axios.create({
+    baseURL: API_CONFIG.BASE_URL,
+    timeout: API_CONFIG.TIMEOUT,
+    headers: API_CONFIG.HEADERS
+  });
+  
+  setupInterceptors(apiClient);
+  
+  if (import.meta.env.DEV) {
+    console.log('✅ API Client inicializado:', {
+      baseURL: API_CONFIG.BASE_URL,
+      timeout: `${API_CONFIG.TIMEOUT}ms`
+    });
+  }
+  
+  return apiClient;
 }
 
 // ============================================
-// CREAR INSTANCIA DE AXIOS
+// INTERCEPTORS
 // ============================================
-const apiClient = axios.create({
-  baseURL: API_CONFIG.BASE_URL,
-  timeout: API_CONFIG.TIMEOUT,
-  headers: API_CONFIG.HEADERS
-});
-
-// ============================================
-// INTERCEPTOR DE REQUEST (Antes de enviar)
-// ============================================
-apiClient.interceptors.request.use(
-  (config) => {
-    // 1. Agregar token de autenticación si existe
-    const token = getAuthToken();
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+function setupInterceptors(client) {
+  // REQUEST INTERCEPTOR
+  client.interceptors.request.use(
+    (config) => {
+      const token = getAuthToken();
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+      
+      if (import.meta.env.DEV) {
+        console.log(`🌐 ${config.method.toUpperCase()} ${config.url}`, {
+          params: config.params,
+          data: config.data
+        });
+      }
+      
+      return config;
+    },
+    (error) => {
+      console.error('❌ Error en interceptor de request:', error);
+      return Promise.reject(error);
     }
-    
-    // 2. Log de petición (solo en desarrollo)
-    if (import.meta.env.DEV) {
-      console.log(`🌐 ${config.method.toUpperCase()} ${config.url}`, {
-        params: config.params,
-        data: config.data
-      });
+  );
+  
+  // RESPONSE INTERCEPTOR
+  client.interceptors.response.use(
+    (response) => {
+      if (import.meta.env.DEV) {
+        console.log(`✅ ${response.config.method.toUpperCase()} ${response.config.url}`, {
+          status: response.status
+        });
+      }
+      return response;
+    },
+    (error) => {
+      handleResponseError(error);
+      return Promise.reject(error);
     }
-    
-    return config;
-  },
-  (error) => {
-    console.error('❌ Error en interceptor de request:', error);
-    return Promise.reject(error);
-  }
-);
-
-// ============================================
-// INTERCEPTOR DE RESPONSE (Después de recibir)
-// ============================================
-apiClient.interceptors.response.use(
-  (response) => {
-    // Log de respuesta exitosa (solo en desarrollo)
-    if (import.meta.env.DEV) {
-      console.log(`✅ ${response.config.method.toUpperCase()} ${response.config.url}`, {
-        status: response.status,
-        data: response.data
-      });
-    }
-    
-    return response;
-  },
-  (error) => {
-    // Manejar errores de respuesta
-    handleResponseError(error);
-    return Promise.reject(error);
-  }
-);
+  );
+}
 
 // ============================================
 // FUNCIONES AUXILIARES
 // ============================================
 
-/**
- * Obtiene el token de autenticación del localStorage
- * @returns {string|null} Token de autenticación
- */
 function getAuthToken() {
   return localStorage.getItem('authToken');
 }
 
-/**
- * Guarda el token de autenticación
- * @param {string} token - Token JWT
- */
 export function setAuthToken(token) {
   if (token) {
     localStorage.setItem('authToken', token);
@@ -99,29 +123,17 @@ export function setAuthToken(token) {
   }
 }
 
-/**
- * Elimina el token de autenticación
- */
 export function clearAuthToken() {
   localStorage.removeItem('authToken');
   console.log('🔓 Token eliminado');
 }
 
-/**
- * Verifica si hay un token válido
- * @returns {boolean}
- */
 export function isAuthenticated() {
   return !!getAuthToken();
 }
 
-/**
- * Maneja errores de respuesta HTTP
- * @param {Error} error - Error de Axios
- */
 function handleResponseError(error) {
   if (!error.response) {
-    // Error de red o timeout
     console.error('❌ Error de conexión:', error.message);
     return;
   }
@@ -130,97 +142,67 @@ function handleResponseError(error) {
   
   console.error(`❌ Error ${status}:`, {
     url: error.config.url,
-    method: error.config.method,
-    message: data.mensaje || data.message || 'Error desconocido',
-    details: data
+    message: data.mensaje || data.message || 'Error desconocido'
   });
   
-  // Manejar errores específicos
   switch (status) {
     case 401:
-      // No autorizado - Limpiar token y redirigir
       console.warn('⚠️ Sesión expirada');
       clearAuthToken();
-      // TODO: Redirigir a login si es necesario
       break;
-      
     case 403:
       console.warn('⚠️ Acceso prohibido');
       break;
-      
     case 404:
       console.warn('⚠️ Recurso no encontrado');
       break;
-      
     case 409:
-      console.warn('⚠️ Conflicto (probablemente email duplicado)');
+      console.warn('⚠️ Conflicto (email duplicado)');
       break;
-      
     case 500:
       console.error('❌ Error interno del servidor');
       break;
-      
-    default:
-      console.error(`❌ Error ${status}`);
   }
 }
 
 // ============================================
-// MÉTODOS HTTP HELPER
+// MÉTODOS HTTP HELPER (Async)
 // ============================================
 
-/**
- * Realiza una petición GET
- * @param {string} url - URL del endpoint
- * @param {object} params - Query parameters
- * @returns {Promise} Promesa con la respuesta
- */
 export async function get(url, params = {}) {
-  const response = await apiClient.get(url, { params });
+  const client = await getApiClient();
+  const response = await client.get(url, { params });
   return response.data;
 }
 
-/**
- * Realiza una petición POST
- * @param {string} url - URL del endpoint
- * @param {object} data - Datos del body
- * @returns {Promise} Promesa con la respuesta
- */
 export async function post(url, data = {}) {
-  const response = await apiClient.post(url, data);
+  const client = await getApiClient();
+  const response = await client.post(url, data);
   return response.data;
 }
 
-/**
- * Realiza una petición PUT
- * @param {string} url - URL del endpoint
- * @param {object} data - Datos del body
- * @returns {Promise} Promesa con la respuesta
- */
 export async function put(url, data = {}) {
-  const response = await apiClient.put(url, data);
+  const client = await getApiClient();
+  const response = await client.put(url, data);
   return response.data;
 }
 
-/**
- * Realiza una petición DELETE
- * @param {string} url - URL del endpoint
- * @returns {Promise} Promesa con la respuesta
- */
 export async function del(url) {
-  const response = await apiClient.delete(url);
+  const client = await getApiClient();
+  const response = await client.delete(url);
   return response.data;
 }
 
 // ============================================
-// EXPORTAR CLIENTE
+// EXPORTAR
 // ============================================
-export default apiClient;
-
-// Log de inicialización
-if (import.meta.env.DEV) {
-  console.log('✅ API Client inicializado:', {
-    baseURL: API_CONFIG.BASE_URL,
-    authenticated: isAuthenticated()
-  });
-}
+export default {
+  getApiClient,
+  get,
+  post,
+  put,
+  del,
+  setAuthToken,
+  clearAuthToken,
+  isAuthenticated
+};

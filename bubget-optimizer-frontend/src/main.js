@@ -379,6 +379,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     console.error('❌ gastosController no está disponible');
                 }
+            } else if (page === 'chat-page') {
+                console.log('💬 Cargando Chat IA...');
+                // ✅ NUEVO: El chat se auto-inicializa
+                if (window.chatIntegrado) {
+                    console.log('✅ Chat IA disponible');
+                } else {
+                    console.error('❌ chatIntegrado no está disponible');
+                }
             }
         });
     });

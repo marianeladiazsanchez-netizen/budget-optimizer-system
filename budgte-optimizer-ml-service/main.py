@@ -1,32 +1,43 @@
-# ============================================
-# 🚀 MAIN.PY - ML SERVICE - VERSIÓN CORRECTA
-# ============================================
-
 import sys
 import os
-from pathlib import Path
 
-# Agregar la carpeta app al path
-sys.path.insert(0, str(Path(__file__).parent))
+# Agregar la ruta actual al path
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-# ✅ IMPORTAR DIRECTAMENTE DE ENDPOINTS
-from app.api.endpoints.endpoints import app
+from app import create_app
+from app.api.endpoints import endpoints
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+app = create_app()
+
+# Incluir rutas
+app.include_router(endpoints.router, prefix="/api/ml", tags=["ml"])
+
+@app.get("/")
+def root():
+    return {
+        "service": "Budget Optimizer ML Service",
+        "version": "2.0.0",
+        "status": "running",
+        "endpoints": {
+            "health": "/health",
+            "analizar": "/api/ml/analizar",
+            "predecir": "/api/ml/predict",
+            "optimizar": "/api/ml/optimize",
+            "anomalias": "/api/ml/anomalias"
+        }
+    }
+
+@app.get("/health")
+def health_check():
+    return {
+        "status": "ok",
+        "service": "Budget Optimizer ML Service"
+    }
 
 if __name__ == "__main__":
     import uvicorn
-    
-    print("=" * 60)
-    print("🚀 Iniciando Budget Optimizer ML Service")
-    print("=" * 60)
-    print("📡 Servidor: http://0.0.0.0:8000")
-    print("📚 Docs: http://localhost:8000/docs")
-    print("🔍 Health: http://localhost:8000/health")
-    print("=" * 60)
-    
-    uvicorn.run(
-        app,
-        host="0.0.0.0",
-        port=8000,
-        log_level="info",
-        reload=True
-    )
+    uvicorn.run(app, host="0.0.0.0", port=8000)

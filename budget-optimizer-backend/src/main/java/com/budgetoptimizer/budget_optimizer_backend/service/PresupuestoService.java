@@ -29,7 +29,6 @@ public class PresupuestoService {
     private final UsuarioRepository usuarioRepo;
     private final CategoriaRepository categoriaRepo;
     private final CategoryLimitRepository categoryLimitRepo;
-    private final ExpenseRepository expenseRepo;
     
     // ==========================================
     // CREACIÓN

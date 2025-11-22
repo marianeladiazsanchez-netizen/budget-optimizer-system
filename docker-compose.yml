@@ -74,12 +74,11 @@ services:
       - /app/node_modules
     environment:
       - NODE_ENV=development
-      - VITE_API_URL=http://backend:8080
-      - VITE_ML_API_URL=http://ml-service:8000
+      - VITE_API_URL=http://localhost:8000
     ports:
       - "${FRONTEND_PORT}:5173"
     depends_on:
-      - backend
+      - ml-service
     networks:
       - budget-network
 
@@ -98,7 +97,6 @@ services:
     volumes:
       - ./budgte-optimizer-ml-service:/app
     depends_on:
-      - backend
       - redis
     networks:
       - budget-network

@@ -1,0 +1,1041 @@
+{
+  "info": {
+    "name": "Budget Optimizer API",
+    "description": "Colección completa de endpoints para Budget Optimizer - Actualizada",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "2.0.0"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "usuarioEmail",
+      "value": "juan.perez@example.com",
+      "type": "string",
+      "description": "✅ AGREGADO: Email del usuario para búsquedas"
+    },
+    {
+      "key": "usuarioId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "presupuestoId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "categoriaId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "expenseId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "timestamp",
+      "value": "{{$timestamp}}",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🏥 Health Check",
+      "item": [
+        {
+          "name": "Check Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/actuator/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["actuator", "health"]
+            },
+            "description": "Verifica el estado de salud de la aplicación"
+          },
+          "response": []
+        },
+        {
+          "name": "Check Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/actuator/info",
+              "host": ["{{baseUrl}}"],
+              "path": ["actuator", "info"]
+            },
+            "description": "Obtiene información de la aplicación"
+          },
+          "response": []
+        },
+        {
+          "name": "Test Endpoint",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/test",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "test"]
+            },
+            "description": "Endpoint de prueba simple"
+          },
+          "response": []
+        },
+        {
+          "name": "Root Endpoint",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": ["{{baseUrl}}"],
+              "path": [""]
+            },
+            "description": "Endpoint raíz del servidor"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "👤 Usuarios",
+      "item": [
+        {
+          "name": "Registrar Usuario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('usuarioId', response.id);",
+                  "    pm.collectionVariables.set('usuarioEmail', response.email);",
+                  "    console.log('✅ Usuario ID guardado:', response.id);",
+                  "    console.log('✅ Usuario Email guardado:', response.email);",
+                  "    pm.test('Usuario creado exitosamente', function() {",
+                  "        pm.expect(response).to.have.property('id');",
+                  "        pm.expect(response).to.have.property('email');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Juan Pérez\",\n  \"email\": \"juan.perez{{$timestamp}}@example.com\",\n  \"password\": \"Password123\",\n  \"ciudad\": \"Cartagena\",\n  \"pais\": \"Colombia\",\n  \"latitud\": 10.4236,\n  \"longitud\": -75.5223,\n  \"presupuestoMensualBase\": 5000.00,\n  \"telefono\": \"+573001234567\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios/registro",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "usuarios", "registro"]
+            },
+            "description": "Registra un nuevo usuario en el sistema"
+          },
+          "response": []
+        },
+        {
+          "name": "Buscar Usuario por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios/{{usuarioId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "usuarios", "{{usuarioId}}"]
+            },
+            "description": "Obtiene un usuario específico por su ID"
+          },
+          "response": []
+        },
+        {
+          "name": "✅ FIXED - Buscar Usuario por Email",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios/buscar?email=usuarioEmail",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "usuarios", "buscar"],
+              "query": [
+                {
+                  "key": "email",
+                  "value": "{{usuarioEmail}}",
+                  "description": "Email del usuario a buscar"
+                }
+              ]
+            },
+            "description": "✅ FIXED: Ahora usa query parameter en lugar de path variable\n\n**Antes (no funcionaba):**\nGET /api/usuarios/email/juan@example.com\n\n**Ahora (funciona):**\nGET /api/usuarios/buscar?email=juan@example.com\n\n**Razón del cambio:**\nEvita conflicto con el endpoint /{id} y permite emails con caracteres especiales sin problemas de encoding."
+          }
+        },
+        {
+          "name": "Listar Todos los Usuarios",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "usuarios"]
+            },
+            "description": "Lista todos los usuarios activos"
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Usuarios por Tipo de Cuenta",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios/tipo/PREMIUM",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "usuarios", "tipo", "PREMIUM"]
+            },
+            "description": "Lista usuarios filtrados por tipo de cuenta (USER, PREMIUM, BUSINESS, ADMIN)"
+          },
+          "response": []
+        },
+        {
+          "name": "Buscar Usuarios Cercanos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios/cercanos?lat=10.4236&lng=-75.5223&radio=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "usuarios", "cercanos"],
+              "query": [
+                {
+                  "key": "lat",
+                  "value": "10.4236",
+                  "description": "Latitud"
+                },
+                {
+                  "key": "lng",
+                  "value": "-75.5223",
+                  "description": "Longitud"
+                },
+                {
+                  "key": "radio",
+                  "value": "10",
+                  "description": "Radio en kilómetros"
+                }
+              ]
+            },
+            "description": "Busca usuarios en un radio específico"
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar Usuario",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Juan Carlos Pérez\",\n  \"telefono\": \"+573009876543\",\n  \"presupuestoMensualBase\": 6000.00\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios/{{usuarioId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "usuarios", "{{usuarioId}}"]
+            },
+            "description": "Actualiza la información de un usuario"
+          },
+          "response": []
+        },
+        {
+          "name": "Cambiar Contraseña",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"passwordActual\": \"Password123\",\n  \"passwordNueva\": \"NewPassword456\",\n  \"passwordConfirmacion\": \"NewPassword456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios/{{usuarioId}}/password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "usuarios", "{{usuarioId}}", "password"]
+            },
+            "description": "Cambia la contraseña de un usuario"
+          },
+          "response": []
+        },
+        {
+          "name": "Upgrade de Cuenta",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios/{{usuarioId}}/upgrade?nuevoTipo=PREMIUM",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "usuarios", "{{usuarioId}}", "upgrade"],
+              "query": [
+                {
+                  "key": "nuevoTipo",
+                  "value": "PREMIUM",
+                  "description": "USER, PREMIUM, BUSINESS, ADMIN"
+                }
+              ]
+            },
+            "description": "Actualiza el tipo de cuenta de un usuario"
+          },
+          "response": []
+        },
+        {
+          "name": "Desactivar Usuario",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios/{{usuarioId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "usuarios", "{{usuarioId}}"]
+            },
+            "description": "Desactiva un usuario (soft delete)"
+          },
+          "response": []
+        },
+        {
+          "name": "Reactivar Usuario",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios/{{usuarioId}}/reactivar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "usuarios", "{{usuarioId}}", "reactivar"]
+            },
+            "description": "Reactiva un usuario desactivado"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📁 Categorías",
+      "item": [
+        {
+          "name": "Obtener Todas las Categorías",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.length > 0) {",
+                  "        pm.collectionVariables.set('categoriaId', response[0].id);",
+                  "        console.log('✅ Categoría ID guardado:', response[0].id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/categorias",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "categorias"]
+            },
+            "description": "Lista todas las categorías activas"
+          },
+          "response": []
+        },
+        {
+          "name": "Categorías para Gastos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/categorias/gastos",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "categorias", "gastos"]
+            },
+            "description": "Obtiene categorías aplicables para gastos (EXPENSE o BOTH)"
+          },
+          "response": []
+        },
+        {
+          "name": "Categorías para Ingresos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/categorias/ingresos",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "categorias", "ingresos"]
+            },
+            "description": "Obtiene categorías aplicables para ingresos"
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Categoría por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/categorias/{{categoriaId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "categorias", "{{categoriaId}}"]
+            },
+            "description": "Obtiene una categoría específica por su ID"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "💰 Presupuestos",
+      "item": [
+        {
+          "name": "Crear Presupuesto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('presupuestoId', response.id);",
+                  "    console.log('✅ Presupuesto ID guardado:', response.id);",
+                  "    pm.test('Presupuesto creado exitosamente', function() {",
+                  "        pm.expect(response).to.have.property('id');",
+                  "        pm.expect(response).to.have.property('nombre');",
+                  "        pm.expect(response.status).to.equal('DRAFT');",
+                  "    });",
+                  "} else {",
+                  "    console.log('❌ Error al crear presupuesto');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Presupuesto Enero 2025\",\n  \"descripcion\": \"Presupuesto mensual para gastos básicos\",\n  \"montoTotal\": 3000.00,\n  \"fechaInicio\": \"2025-01-01T00:00:00\",\n  \"fechaFin\": \"2025-01-31T23:59:59\",\n  \"periodo\": \"MONTHLY\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/presupuestos?usuarioId={{usuarioId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "presupuestos"],
+              "query": [
+                {
+                  "key": "usuarioId",
+                  "value": "{{usuarioId}}"
+                }
+              ]
+            },
+            "description": "Crea un nuevo presupuesto para un usuario"
+          },
+          "response": []
+        },
+        {
+          "name": "Crear Presupuesto con Límites",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Presupuesto Febrero 2025\",\n  \"descripcion\": \"Presupuesto con límites por categoría\",\n  \"montoTotal\": 5000.00,\n  \"fechaInicio\": \"2025-02-01T00:00:00\",\n  \"fechaFin\": \"2025-02-28T23:59:59\",\n  \"periodo\": \"MONTHLY\",\n  \"limitesCategorias\": {\n    \"1\": 1500.00,\n    \"2\": 800.00,\n    \"3\": 500.00\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/presupuestos?usuarioId={{usuarioId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "presupuestos"],
+              "query": [
+                {
+                  "key": "usuarioId",
+                  "value": "{{usuarioId}}"
+                }
+              ]
+            },
+            "description": "Crea presupuesto con límites específicos por categoría"
+          },
+          "response": []
+        },
+        {
+          "name": "Buscar Presupuesto por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/presupuestos/{{presupuestoId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "presupuestos", "{{presupuestoId}}"]
+            },
+            "description": "Obtiene un presupuesto específico por su ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Presupuestos por Usuario",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/presupuestos/usuario/{{usuarioId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "presupuestos", "usuario", "{{usuarioId}}"]
+            },
+            "description": "Lista todos los presupuestos de un usuario"
+          },
+          "response": []
+        },
+        {
+          "name": "Listar por Usuario y Estado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/presupuestos/usuario/{{usuarioId}}/estado/ACTIVE",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "presupuestos", "usuario", "{{usuarioId}}", "estado", "ACTIVE"]
+            },
+            "description": "Lista presupuestos filtrados por estado (DRAFT, ACTIVE, PAUSED, COMPLETED, EXCEEDED, CANCELLED, ARCHIVED)"
+          },
+          "response": []
+        },
+        {
+          "name": "Presupuesto Actual (Activo)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/presupuestos/usuario/{{usuarioId}}/actual",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "presupuestos", "usuario", "{{usuarioId}}", "actual"]
+            },
+            "description": "Obtiene el presupuesto activo actual del usuario"
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar Presupuesto",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Presupuesto Enero 2025 - Actualizado\",\n  \"descripcion\": \"Descripción actualizada\",\n  \"montoTotal\": 3500.00\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/presupuestos/{{presupuestoId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "presupuestos", "{{presupuestoId}}"]
+            },
+            "description": "Actualiza un presupuesto (solo en estado DRAFT)"
+          },
+          "response": []
+        },
+        {
+          "name": "Activar Presupuesto",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/presupuestos/{{presupuestoId}}/activar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "presupuestos", "{{presupuestoId}}", "activar"]
+            },
+            "description": "Activa un presupuesto (DRAFT/PAUSED → ACTIVE)"
+          },
+          "response": []
+        },
+        {
+          "name": "Pausar Presupuesto",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/presupuestos/{{presupuestoId}}/pausar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "presupuestos", "{{presupuestoId}}", "pausar"]
+            },
+            "description": "Pausa un presupuesto (ACTIVE/EXCEEDED → PAUSED)"
+          },
+          "response": []
+        },
+        {
+          "name": "Completar Presupuesto",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/presupuestos/{{presupuestoId}}/completar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "presupuestos", "{{presupuestoId}}", "completar"]
+            },
+            "description": "Completa un presupuesto (cualquier estado → COMPLETED)"
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar Presupuesto",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/presupuestos/{{presupuestoId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "presupuestos", "{{presupuestoId}}"]
+            },
+            "description": "Elimina un presupuesto (solo DRAFT o sin gastos)"
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Estadísticas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/presupuestos/usuario/{{usuarioId}}/estadisticas",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "presupuestos", "usuario", "{{usuarioId}}", "estadisticas"]
+            },
+            "description": "Obtiene estadísticas agregadas de presupuestos del usuario"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "💸 Gastos (Expenses)",
+      "item": [
+        {
+          "name": "Crear Gasto Simple",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('expenseId', response.id);",
+                  "    console.log('✅ Expense ID guardado:', response.id);",
+                  "    pm.test('Gasto creado exitosamente', function() {",
+                  "        pm.expect(response).to.have.property('id');",
+                  "        pm.expect(response).to.have.property('monto');",
+                  "    });",
+                  "} else {",
+                  "    console.log('❌ Error al crear gasto');",
+                  "    console.log('Response:', pm.response.text());",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"monto\": 45.50,\n  \"descripcion\": \"Compra en supermercado\",\n  \"fechaGasto\": \"2025-01-15T14:30:00\",\n  \"presupuestoId\": {{presupuestoId}},\n  \"categoriaId\": {{categoriaId}},\n  \"usuarioId\": {{usuarioId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/expenses",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "expenses"]
+            },
+            "description": "Crea un gasto simple sin campos opcionales"
+          },
+          "response": []
+        },
+        {
+          "name": "Crear Gasto Completo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"monto\": 85.75,\n  \"descripcion\": \"Cena en restaurante con amigos\",\n  \"fechaGasto\": \"2025-01-20T19:30:00\",\n  \"presupuestoId\": {{presupuestoId}},\n  \"categoriaId\": {{categoriaId}},\n  \"usuarioId\": {{usuarioId}},\n  \"metodoPago\": \"CREDIT_CARD\",\n  \"notas\": \"Incluye propina del 10%\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/expenses",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "expenses"]
+            },
+            "description": "Crea un gasto con todos los campos incluyendo método de pago y notas"
+          },
+          "response": []
+        },
+        {
+          "name": "Crear Gasto con Empresa",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"monto\": 120.00,\n  \"descripcion\": \"Compra en tienda específica\",\n  \"fechaGasto\": \"2025-01-18T16:00:00\",\n  \"presupuestoId\": {{presupuestoId}},\n  \"categoriaId\": {{categoriaId}},\n  \"usuarioId\": {{usuarioId}},\n  \"metodoPago\": \"DEBIT_CARD\",\n  \"empresaId\": \"EMP-001\",\n  \"notas\": \"Compra mensual\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/expenses",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "expenses"]
+            },
+            "description": "Crea un gasto asociado a una empresa específica"
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Gasto por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/expenses/{{expenseId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "expenses", "{{expenseId}}"]
+            },
+            "description": "Obtiene un gasto específico por su ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Gastos por Presupuesto",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/expenses/presupuesto/{{presupuestoId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "expenses", "presupuesto", "{{presupuestoId}}"]
+            },
+            "description": "Lista todos los gastos de un presupuesto específico"
+          },
+          "response": []
+        },
+        {
+          "name": "Gastos por Usuario",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/expenses/usuario/{{usuarioId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "expenses", "usuario", "{{usuarioId}}"]
+            },
+            "description": "Lista todos los gastos de un usuario ordenados por fecha descendente"
+          },
+          "response": []
+        },
+        {
+          "name": "Gastos por Rango de Fechas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/expenses/usuario/{{usuarioId}}/rango?inicio=2025-01-01T00:00:00&fin=2025-01-31T23:59:59",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "expenses", "usuario", "{{usuarioId}}", "rango"],
+              "query": [
+                {
+                  "key": "inicio",
+                  "value": "2025-01-01T00:00:00",
+                  "description": "Fecha de inicio (formato ISO)"
+                },
+                {
+                  "key": "fin",
+                  "value": "2025-01-31T23:59:59",
+                  "description": "Fecha de fin (formato ISO)"
+                }
+              ]
+            },
+            "description": "Obtiene gastos de un usuario en un rango de fechas específico"
+          },
+          "response": []
+        },
+        {
+          "name": "Gastos por Presupuesto y Categoría",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/expenses/presupuesto/{{presupuestoId}}/categoria/{{categoriaId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "expenses", "presupuesto", "{{presupuestoId}}", "categoria", "{{categoriaId}}"]
+            },
+            "description": "Obtiene gastos filtrados por presupuesto y categoría"
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar Gasto",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"monto\": 50.00,\n  \"descripcion\": \"Compra actualizada en supermercado\",\n  \"fechaGasto\": \"2025-01-15T14:30:00\",\n  \"presupuestoId\": {{presupuestoId}},\n  \"categoriaId\": {{categoriaId}},\n  \"usuarioId\": {{usuarioId}},\n  \"metodoPago\": \"CASH\",\n  \"notas\": \"Actualizado: agregado descuento\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/expenses/{{expenseId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "expenses", "{{expenseId}}"]
+            },
+            "description": "Actualiza un gasto existente (solo si el presupuesto lo permite)"
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar Gasto",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/expenses/{{expenseId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "expenses", "{{expenseId}}"]
+            },
+            "description": "Elimina un gasto (solo si el presupuesto lo permite)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🧪 Tests de Flujo Completo",
+      "item": [
+        {
+          "name": "1. Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/actuator/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["actuator", "health"]
+            }
+          }
+        },
+        {
+          "name": "2. Registrar Usuario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('usuarioId', response.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Test User\",\n  \"email\": \"test{{$timestamp}}@example.com\",\n  \"password\": \"Password123\",\n  \"ciudad\": \"Cartagena\",\n  \"pais\": \"Colombia\",\n  \"presupuestoMensualBase\": 5000.00\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios/registro",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "usuarios", "registro"]
+            }
+          }
+        },
+        {
+          "name": "3. Obtener Categorías",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.length > 0) {",
+                  "        pm.collectionVariables.set('categoriaId', response[0].id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/categorias",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "categorias"]
+            }
+          }
+        },
+        {
+          "name": "4. Crear Presupuesto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('presupuestoId', response.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Test Budget\",\n  \"montoTotal\": 3000.00,\n  \"fechaInicio\": \"2025-01-01T00:00:00\",\n  \"fechaFin\": \"2025-01-31T23:59:59\",\n  \"periodo\": \"MONTHLY\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/presupuestos?usuarioId={{usuarioId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "presupuestos"],
+              "query": [{"key": "usuarioId", "value": "{{usuarioId}}"}]
+            }
+          }
+        },
+        {
+          "name": "5. Activar Presupuesto",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/presupuestos/{{presupuestoId}}/activar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "presupuestos", "{{presupuestoId}}", "activar"]
+            }
+          }
+        },
+        {
+          "name": "6. Crear Gasto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('expenseId', response.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"monto\": 45.50,\n  \"descripcion\": \"Test Expense\",\n  \"fechaGasto\": \"2025-01-15T14:30:00\",\n  \"presupuestoId\": {{presupuestoId}},\n  \"categoriaId\": {{categoriaId}},\n  \"usuarioId\": {{usuarioId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/expenses",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "expenses"]
+            }
+          }
+        },
+        {
+          "name": "7. Ver Gastos del Presupuesto",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/expenses/presupuesto/{{presupuestoId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "expenses", "presupuesto", "{{presupuestoId}}"]
+            }
+          }
+        },
+        {
+          "name": "8. Ver Estadísticas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/presupuestos/usuario/{{usuarioId}}/estadisticas",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "presupuestos", "usuario", "{{usuarioId}}", "estadisticas"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

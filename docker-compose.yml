@@ -21,17 +21,44 @@ services:
 
   # Servicio Backend
   backend:
-    build: ./budget-optimizer-backend
-    container_name: budget-optimizer-backend
+    build: 
+      context: ./budget-optimizer-backend
+      dockerfile: Dockerfile.dev
+    container_name: budget-optimizer-backend-dev
     environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
-      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
-      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
-      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      # Configuración de Spring
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      
+      # Configuración de Base de Datos (IMPORTANTE: usar nombre del servicio 'postgres')
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-budget_optimizer}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-admin}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-adminpass}
+      
+      # JPA/Hibernate
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: "true"
+      
+      # Logging
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      
+      # Geolocalización (nombres que Spring espera)
+      GEOLOCATION_API_KEY: ${GEOLOCATION_API_KEY:-n8TCvvBOQNBWzn3R5wuMVcyXVE5zuGzD1dEpfWYaPLkvrQUZsPUjkefxlxfnC96I}
+      GEOLOCATION_API_URL: ${GEOLOCATION_API_URL:-https://api.distancematrix.ai/maps/api/geocode/json}
+      
+      # IMPORTANTE: Spring Boot requiere estas en formato específico
+      APP_GEOLOCATION_API_KEY: ${GEOLOCATION_API_KEY:-n8TCvvBOQNBWzn3R5wuMVcyXVE5zuGzD1dEpfWYaPLkvrQUZsPUjkefxlxfnC96I}
+      APP_GEOLOCATION_API_URL: ${GEOLOCATION_API_URL:-https://api.distancematrix.ai/maps/api/geocode/json}
+      
+      # Java Options
+      JAVA_OPTS: "-Xmx512m -Xms256m"
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION: ${JWT_EXPIRATION}
     ports:
       - "${BACKEND_PORT}:8080"
+    volumes:
+      - ./budget-optimizer-backend:/app  
+      -  ~/.m2:/root/.m2    
+    command: mvn spring-boot:run
     depends_on:
       postgres:
         condition: service_healthy
@@ -47,12 +74,11 @@ services:
       - /app/node_modules
     environment:
       - NODE_ENV=development
-      - VITE_API_URL=http://backend:8080
-      - VITE_ML_API_URL=http://ml-service:8000
+      - VITE_API_URL=http://localhost:8000
     ports:
       - "${FRONTEND_PORT}:5173"
     depends_on:
-      - backend
+      - ml-service
     networks:
       - budget-network
 
@@ -71,7 +97,6 @@ services:
     volumes:
       - ./budgte-optimizer-ml-service:/app
     depends_on:
-      - backend
       - redis
     networks:
       - budget-network

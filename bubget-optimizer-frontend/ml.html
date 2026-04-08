@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat con IA - Budget Optimizer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="./src/mlstyles.css" />
+</head>
+<body>
+    <div class="chat-container">
+        <!-- Header -->
+        <div class="chat-header">
+            <div class="avatar">🤖</div>
+            <div class="info">
+                <h2>Asistente IA de Presupuestos</h2>
+                <p>
+                    Conectado con Gemini
+                    <span class="status-badge online" id="status-badge">Online</span>
+                </p>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <button class="quick-action" data-action="analizar">📊 Analizar mi presupuesto</button>
+            <button class="quick-action" data-action="predecir">🔮 Predecir gastos futuros</button>
+            <button class="quick-action" data-action="optimizar">⚙️ Optimizar distribución</button>
+            <button class="quick-action" data-action="anomalias">🔍 Detectar anomalías</button>
+        </div>
+
+        <!-- Messages -->
+        <div class="chat-messages" id="chat-messages">
+            <div class="message bot">
+                <div class="message-content">
+                    <p>👋 ¡Hola! Soy tu asistente de IA para optimización de presupuestos.</p>
+                    <p>Puedo ayudarte a:</p>
+                    <ul>
+                        <li>📊 Analizar tu presupuesto actual</li>
+                        <li>🔮 Predecir gastos futuros</li>
+                        <li>⚙️ Optimizar la distribución de recursos</li>
+                        <li>🔍 Detectar anomalías en tus gastos</li>
+                    </ul>
+                    <p>¿En qué puedo ayudarte hoy?</p>
+                    <div class="message-time">Ahora</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Typing Indicator -->
+        <div class="typing-indicator" id="typing-indicator">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+
+        <!-- Input -->
+        <div class="chat-input">
+            <input 
+                type="text" 
+                id="message-input" 
+                placeholder="Escribe tu mensaje..."
+                autocomplete="off"
+            >
+            <button id="send-button">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+    <script src="./src/ml.js"></script>
+</body>
+</html>

@@ -1,1 +1,1 @@
-# app/utils/__init__.py
+"""Core ML package."""

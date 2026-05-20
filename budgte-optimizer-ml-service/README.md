@@ -1,129 +1,81 @@
-# Estructura del Proyecto ML Service
+﻿# Budget Optimizer ML Service
 
-```
-ml-service/
-├── README.md
-├── requirements.txt                    # Dependencias Python
-├── requirements-dev.txt               # Dependencias de desarrollo
-├── Dockerfile                        # Contenedor Docker
-├── .dockerignore                     # Archivos a ignorar
-├── .env.example                      # Variables de entorno ejemplo
-├── .gitignore                        # Archivos Git ignore
-├── main.py                          # Punto de entrada FastAPI
-├── pyproject.toml                   # Configuración del proyecto
-│
-├── app/                             # Aplicación principal
-│   ├── __init__.py
-│   ├── config.py                    # Configuraciones
-│   ├── main.py                      # App FastAPI
-│   │
-│   ├── api/                         # Endpoints de la API
-│   │   ├── __init__.py
-│   │   ├── deps.py                  # Dependencias
-│   │   ├── router.py                # Router principal
-│   │   └── endpoints/
-│   │       ├── __init__.py
-│   │       ├── health.py            # Health checks
-│   │       ├── prediction.py        # Predicciones
-│   │       ├── optimization.py      # Optimización de presupuestos
-│   │       └── analysis.py          # Análisis de datos
-│   │
-│   ├── core/                        # Core funcionalidades
-│   │   ├── __init__.py
-│   │   ├── config.py                # Configuración central
-│   │   ├── logging.py               # Configuración de logs
-│   │   ├── security.py              # Seguridad y auth
-│   │   └── exceptions.py            # Excepciones personalizadas
-│   │
-│   ├── models/                      # Modelos de ML
-│   │   ├── __init__.py
-│   │   ├── base.py                  # Modelo base
-│   │   ├── budget_optimizer.py      # Optimizador de presupuestos
-│   │   ├── expense_predictor.py     # Predictor de gastos
-│   │   ├── anomaly_detector.py      # Detector de anomalías
-│   │   └── market_analyzer.py       # Analizador de mercados
-│   │
-│   ├── schemas/                     # Pydantic schemas
-│   │   ├── __init__.py
-│   │   ├── base.py                  # Schemas base
-│   │   ├── prediction.py            # Schemas de predicción
-│   │   ├── budget.py                # Schemas de presupuesto
-│   │   ├── transaction.py           # Schemas de transacciones
-│   │   └── response.py              # Schemas de respuesta
-│   │
-│   ├── services/                    # Servicios de negocio
-│   │   ├── __init__.py
-│   │   ├── gemini_service.py        # Integración con Gemini API
-│   │   ├── prediction_service.py    # Servicio de predicciones
-│   │   ├── optimization_service.py  # Servicio de optimización
-│   │   ├── data_service.py          # Servicio de datos
-│   │   └── cache_service.py         # Servicio de caché
-│   │
-│   ├── utils/                       # Utilidades
-│   │   ├── __init__.py
-│   │   ├── data_validation.py       # Validación de datos
-│   │   ├── currency_converter.py    # Convertidor de monedas
-│   │   ├── date_utils.py            # Utilidades de fechas
-│   │   ├── math_utils.py            # Utilidades matemáticas
-│   │   └── decorators.py            # Decoradores personalizados
-│   │
-│   └── middleware/                  # Middlewares
-│       ├── __init__.py
-│       ├── cors.py                  # CORS middleware
-│       ├── logging.py               # Logging middleware
-│       └── rate_limiting.py         # Rate limiting
-│
-├── data/                           # Datos y modelos
-│   ├── raw/                        # Datos sin procesar
-│   ├── processed/                  # Datos procesados
-│   ├── models/                     # Modelos entrenados
-│   └── cache/                      # Caché de respuestas
-│
-├── notebooks/                      # Jupyter notebooks
-│   ├── data_exploration.ipynb
-│   ├── model_training.ipynb
-│   └── model_evaluation.ipynb
-│
-├── scripts/                        # Scripts de utilidad
-│   ├── __init__.py
-│   ├── train_models.py             # Entrenamiento de modelos
-│   ├── data_migration.py           # Migración de datos
-│   ├── benchmark.py                # Benchmarks
-│   └── deploy.py                   # Script de despliegue
-│
-├── tests/                          # Tests
-│   ├── __init__.py
-│   ├── conftest.py                 # Configuración de tests
-│   ├── test_api/                   # Tests de API
-│   │   ├── __init__.py
-│   │   ├── test_health.py
-│   │   ├── test_prediction.py
-│   │   └── test_optimization.py
-│   ├── test_services/              # Tests de servicios
-│   │   ├── __init__.py
-│   │   ├── test_gemini_service.py
-│   │   └── test_prediction_service.py
-│   ├── test_models/                # Tests de modelos
-│   │   ├── __init__.py
-│   │   └── test_budget_optimizer.py
-│   └── test_utils/                 # Tests de utilidades
-│       ├── __init__.py
-│       └── test_data_validation.py
-│
-└── docs/                           # Documentación
-    ├── api.md
-    ├── models.md
-    ├── deployment.md
-    └── examples.md
+Servicio ligero de FastAPI para análisis, predicción, optimización y detección de anomalías en presupuestos.
+
+## Estado actual
+- Proyecto simplificado para estudiantes de semestre 4.
+- Se eliminaron dependencias y archivos innecesarios.
+- El servicio usa solo lo mínimo que requiere el código actual.
+
+## Dependencias
+Instala las dependencias de runtime:
+
+```bash
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 ```
 
-## Archivos a crear primero:
+## Configuración de entorno
+Crea o edita el archivo `.env` en la raíz del servicio.
 
-1. **requirements.txt** - Dependencias principales
-2. **requirements-dev.txt** - Dependencias de desarrollo  
-3. **.env.example** - Variables de entorno
-4. **pyproject.toml** - Configuración del proyecto
-5. **main.py** - Punto de entrada
-6. **app/config.py** - Configuraciones
+```env
+GEMINI_API_KEY=tu_api_key_aqui
+GEMINI_MODEL_NAME=gemini-1.5-flash
+APP_ENV=development
+```
 
-¿Quieres que empecemos creando estos archivos base? Te sugiero comenzar con el **requirements.txt** y la configuración inicial.
+### Sobre Gemini
+El servicio utiliza **Google Gemini 1.5 Flash**, un modelo optimizado para:
+- Análisis rápido de presupuestos y gastos
+- Predicción de tendencias de gasto
+- Detección de anomalías en transacciones
+- Optimización de presupuestos personalizados
+
+Este modelo es ideal para este caso de uso porque ofrece:
+- **Velocidad**: Respuestas rápidas para análisis en tiempo real
+- **Eficiencia**: Menor costo por llamada API
+- **Precisión**: Modelo entrenado en análisis financiero
+
+**Requisito:** Debes configurar tu `GEMINI_API_KEY` en el archivo `.env` para que el servicio funcione.
+
+## Ejecutar localmente
+
+```bash
+python main.py
+```
+
+O bien con Uvicorn:
+
+```bash
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+
+## Docker
+
+Construir la imagen:
+
+```bash
+docker build -t budget-optimizer-ml-service .
+```
+
+Ejecutar el contenedor:
+
+```bash
+docker run --rm -p 8000:8000 budget-optimizer-ml-service
+```
+
+## Estructura relevante
+
+- `main.py` - punto de entrada de FastAPI, exporta la app desde `app`.
+- `app/` - aplicación principal con API, servicios, proveedores, prompts y utilidades.
+- `requirements.txt` - dependencias reducidas al runtime.
+- `Dockerfile` - contenedor más ligero sin compilación de paquetes innecesarios.
+- `.env` - configuración de entorno para la aplicación.
+
+## Cambios clave
+
+- ✅ **Integración con Google Gemini 1.5 Flash**: El servicio ahora llama a la API de Google Gemini para análisis inteligente de presupuestos.
+- ✅ Se eliminó la instalación de `build-essential` en Docker para reducir el peso de la imagen.
+- ✅ Se removió `start.sh` porque apuntaba a `app.py`, que no existe en este proyecto.
+- ✅ Se agregó configuración de `.env` en el servicio con `GEMINI_API_KEY`.
+- Dependencias: `fastapi`, `uvicorn`, `pydantic`, `google-generativeai`

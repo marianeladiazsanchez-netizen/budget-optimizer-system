@@ -65,3 +65,4 @@ public class HistorialBusqueda {
 
         return this.fecha.isAfter(fechaComparacion);
     }
+}

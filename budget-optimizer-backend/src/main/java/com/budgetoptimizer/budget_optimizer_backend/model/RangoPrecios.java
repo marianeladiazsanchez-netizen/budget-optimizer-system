@@ -47,3 +47,4 @@ private BigDecimal promedio;
         return precio.compareTo(minimo) >= 0
             && precio.compareTo(maximo) <= 0;
     }
+}

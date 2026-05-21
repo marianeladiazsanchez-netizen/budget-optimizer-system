@@ -85,3 +85,5 @@ public class Review {
         return calificacion != null
             && calificacion >= 4;
     }
+
+}

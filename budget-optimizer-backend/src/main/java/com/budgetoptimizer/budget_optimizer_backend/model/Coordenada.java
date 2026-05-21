@@ -22,7 +22,7 @@ public class Coordenada {
      
      // metodos para la funcionalidad de las coordenadas
      public double distanciaA(Coordenada otra) {
-          final radioTierra = 6371e3; // en metros
+          final double radioTierra = 6371e3; // en metros
           double lat1Rad = Math.toRadians(this.latitud);
           double lat2Rad = Math.toRadians(otra.latitud);
           double deltaLatRad = Math.toRadians(otra.latitud - this.latitud);

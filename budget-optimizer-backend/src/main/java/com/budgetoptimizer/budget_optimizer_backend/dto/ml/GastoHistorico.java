@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class GastoHistorico {
     private String categoria;
-    private Double monto;
+    private BigDecimal monto;
     private String mes; // formato: "2025-01"
     private String fecha;
 }

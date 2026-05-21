@@ -14,5 +14,5 @@ public class AnalisisPresupuestoResponse {
     private String analisis;
     private List<String> recomendaciones;
     private String ahorroPotencial;
-    private Double confianza;
+    private BigDecimal confianza;
 }

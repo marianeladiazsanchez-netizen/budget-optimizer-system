@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OptimizacionPresupuestoRequest {
-    private Double montoTotal;
+    private BigDecimal montoTotal;
     private List<String> categorias;
     private List<Integer> prioridades;
     private Map<String, BigDecimal> gastosActuales;

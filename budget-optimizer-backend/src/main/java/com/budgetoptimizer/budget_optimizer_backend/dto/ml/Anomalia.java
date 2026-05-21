@@ -14,6 +14,6 @@ public class Anomalia {
     private String categoria;
     private BigDecimal montoEsperado;
     private BigDecimal montoReal;
-    private Double desviacion;
+    private BigDecimal desviacion;
     private String descripcion;
 }

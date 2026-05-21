@@ -2,6 +2,7 @@ package com.budgetoptimizer.budget_optimizer_backend.model;
 
 import java.time.LocalDateTime;
 import jakarta.persistence.Column;
+import java.math.BigDecimal;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -12,11 +13,19 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.NoArgsConstructor;
-@Data
+import lombok.Getter;
+import lombok.Setter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import java.math.RoundingMode;
+
+
+@Getter
+@Setter
 @Entity
 @Table(name = "category_limits")
 @AllArgsConstructor
@@ -26,19 +35,23 @@ public class CategoryLimit {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "presupuesto_id", nullable = false)
     private Presupuesto presupuesto;
-    
+
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "categoria_id", nullable = false)
     private Categoria categoria;
     
+    @NotNull
+    @Positive
     @Column(nullable = false)
-    private Double limiteAsignado;
+    private BigDecimal limiteAsignado;
     
     @Column(nullable = false)
-    private Double gastoActual = 0.0;
+    private BigDecimal gastoActual = BigDecimal.ZERO;
     
     @CreationTimestamp
     private LocalDateTime fechaCreacion;
@@ -52,67 +65,78 @@ public class CategoryLimit {
      /**
      * Calcula el monto restante del límite
      */
-    public Double calcularRestante() {
-        return limiteAsignado - gastoActual;
+    public BigDecimal calcularRestante() {
+        return limiteAsignado.subtract(gastoActual);
     }
     
     /**
      * Calcula el porcentaje usado del límite
      */
-    public Double calcularPorcentajeUsado() {
-        if (limiteAsignado == null || limiteAsignado == 0) {
-            return 0.0;
+    public BigDecimal calcularPorcentajeUsado() {
+        if ((limiteAsignado == null || limiteAsignado.compareTo(BigDecimal.ZERO) == 0)) {
+            return BigDecimal.ZERO;
         }
-        return (gastoActual / limiteAsignado) * 100;
+        return gastoActual
+        .multiply(BigDecimal.valueOf(100))
+        .divide(limiteAsignado, 2, RoundingMode.HALF_UP);
     }
     
     /**
      * Verifica si está cerca del límite (>= 80%)
      */
     public Boolean estaCercaDelLimite() {
-        return calcularPorcentajeUsado() >= 80.0;
+       return calcularPorcentajeUsado()
+           .compareTo(BigDecimal.valueOf(80)) >= 0;
     }
     
     /**
      * Verifica si ha excedido el límite
      */
     public Boolean haExcedidoLimite() {
-        return gastoActual > limiteAsignado;
+       return gastoActual.compareTo(limiteAsignado) > 0;
     }
     
     /**
      * Agrega un gasto al total actual
      */
-    public void agregarGasto(Double monto) {
-        if (monto != null && monto > 0) {
-            this.gastoActual += monto;
+    public void agregarGasto(BigDecimal monto) {
+        if (monto != null && monto.compareTo(BigDecimal.ZERO) > 0) {
+           this.gastoActual = this.gastoActual.add(monto);
         }
     }
     
     /**
      * Resta un gasto del total actual (para cuando se elimina un gasto)
      */
-    public void restarGasto(Double monto) {
-        if (monto != null && monto > 0) {
-            this.gastoActual = Math.max(0, this.gastoActual - monto);
+    public void restarGasto(BigDecimal monto) {
+        if (monto != null && monto.compareTo(BigDecimal.ZERO) <= 0) {
+           this.gastoActual = this.gastoActual.subtract(monto);
+
+           if (this.gastoActual.compareTo(BigDecimal.ZERO) < 0) {
+               this.gastoActual = BigDecimal.ZERO;
+}
         }
     }
     
     /**
      * Verifica si puede agregar un gasto sin exceder el límite
      */
-    public Boolean puedeAgregarGasto(Double monto) {
-        if (monto == null || monto <= 0) {
+    public Boolean puedeAgregarGasto(BigDecimal monto) {
+        if (monto == null || monto.compareTo(BigDecimal.ZERO) <= 0) {
             return false;
         }
-        return (gastoActual + monto) <= limiteAsignado;
+        return gastoActual.add(monto).compareTo(limiteAsignado) <= 0;
     }
     
     /**
      * Calcula cuánto falta para alcanzar el límite
      */
-    public Double cuantoFaltaParaLimite() {
-        return Math.max(0, limiteAsignado - gastoActual);
+    public BigDecimal cuantoFaltaParaLimite() {
+       BigDecimal restante = limiteAsignado.subtract(gastoActual);
+
+       return restante.compareTo(BigDecimal.ZERO) > 0
+           ? restante
+           : BigDecimal.ZERO;
     }
 }
 

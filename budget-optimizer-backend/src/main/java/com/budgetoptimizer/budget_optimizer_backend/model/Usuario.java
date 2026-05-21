@@ -12,142 +12,204 @@ import com.budgetoptimizer.budget_optimizer_backend.enums.AccountType;
 import com.budgetoptimizer.budget_optimizer_backend.exception.LimiteTransaccionesException;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import jakarta.persistence.*;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.AttributeOverrides;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "usuarios")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class Usuario {
-    
+
     // ==========================================
     // CLAVE PRIMARIA
     // ==========================================
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     // ==========================================
     // INFORMACIÓN BÁSICA
     // ==========================================
-    
+
     @Column(nullable = false, length = 100)
     private String nombre;
-    
+
     @Column(unique = true, nullable = false, length = 150)
     private String email;
-    
+
     @Column(nullable = false)
-    @JsonIgnore  // Nunca exponer password en JSON
+    @JsonIgnore
     private String password;
-    
+
     @Column(length = 20)
-    private String telefono;  // ✅ AGREGADO
-    
+    private String telefono;
+
     // ==========================================
-    // UBICACIÓN (OPCIONAL)
+    // UBICACIÓN
     // ==========================================
-    
+
     @Embedded
     @AttributeOverrides({
-        @AttributeOverride(name = "latitud", column = @Column(name = "latitud")),
-        @AttributeOverride(name = "longitud", column = @Column(name = "longitud"))
+        @AttributeOverride(
+            name = "latitud",
+            column = @Column(name = "latitud")
+        ),
+        @AttributeOverride(
+            name = "longitud",
+            column = @Column(name = "longitud")
+        )
     })
     private Coordenada ubicacion;
-    
+
     @Column(length = 100)
     private String ciudad;
-    
+
     @Column(length = 100)
     private String pais;
-    
+
     // ==========================================
-    // TIPO DE CUENTA Y PERMISOS
+    // TIPO DE CUENTA
     // ==========================================
-    
+
     @Enumerated(EnumType.STRING)
     @Column(name = "account_type", nullable = false)
     @Builder.Default
     private AccountType accountType = AccountType.USER;
-    
+
     // ==========================================
     // PRESUPUESTO Y TRANSACCIONES
     // ==========================================
-    
-    @Column(name = "presupuesto_mensual_base", nullable = false, precision = 15, scale = 2)
+
+    @Column(
+        name = "presupuesto_mensual_base",
+        nullable = false,
+        precision = 15,
+        scale = 2
+    )
     private BigDecimal presupuestoMensualBase;
-    
+
     @Column(name = "transacciones_mes_actual")
     @Builder.Default
-    private Integer transaccionesMesActual = 0;  // ✅ AGREGADO
-    
+    private Integer transaccionesMesActual = 0;
+
     // ==========================================
-    // ESTADO Y CONFIGURACIÓN
+    // ESTADO
     // ==========================================
-    
+
     @Column(nullable = false)
     @Builder.Default
     private Boolean activo = true;
-    
+
     // ==========================================
-    // FECHAS DE AUDITORÍA
+    // FECHAS
     // ==========================================
-    
+
     @CreationTimestamp
-    @Column(name = "fecha_creacion", nullable = false, updatable = false)
+    @Column(
+        name = "fecha_creacion",
+        nullable = false,
+        updatable = false
+    )
     private LocalDateTime fechaCreacion;
-    
-    @UpdateTimestamp  // ✅ Actualiza automáticamente
+
+    @UpdateTimestamp
     @Column(name = "fecha_modificacion")
-    private LocalDateTime fechaModificacion;  // ✅ AGREGADO
-    
+    private LocalDateTime fechaModificacion;
+
     @Column(name = "ultimo_acceso")
-    private LocalDateTime ultimoAcceso;  // ✅ AGREGADO
-    
+    private LocalDateTime ultimoAcceso;
+
     // ==========================================
     // RELACIONES
     // ==========================================
-    
-    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
+
+    @OneToMany(
+        mappedBy = "usuario",
+        cascade = CascadeType.ALL,
+        orphanRemoval = true,
+        fetch = FetchType.LAZY
+    )
     @JsonIgnore
     @Builder.Default
     private List<Presupuesto> presupuestos = new ArrayList<>();
-    
-    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
+
+    @OneToMany(
+        mappedBy = "usuario",
+        cascade = CascadeType.ALL,
+        orphanRemoval = true,
+        fetch = FetchType.LAZY
+    )
     @JsonIgnore
     @Builder.Default
     private List<Expense> expenses = new ArrayList<>();
-    
-    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
+
+    @OneToMany(
+        mappedBy = "usuario",
+        cascade = CascadeType.ALL,
+        orphanRemoval = true,
+        fetch = FetchType.LAZY
+    )
     @JsonIgnore
     @Builder.Default
     private List<MLOptimization> mlOptimizations = new ArrayList<>();
-    
-    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
+
+    @OneToMany(
+        mappedBy = "usuario",
+        cascade = CascadeType.ALL,
+        orphanRemoval = true,
+        fetch = FetchType.LAZY
+    )
     @JsonIgnore
     @Builder.Default
     private List<Review> reviews = new ArrayList<>();
-    
-    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
+
+    @OneToMany(
+        mappedBy = "usuario",
+        cascade = CascadeType.ALL,
+        orphanRemoval = true,
+        fetch = FetchType.LAZY
+    )
     @JsonIgnore
     @Builder.Default
     private List<HistorialBusqueda> historialBusquedas = new ArrayList<>();
-    
-    @OneToOne(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
+
+    @OneToOne(
+        mappedBy = "usuario",
+        cascade = CascadeType.ALL,
+        orphanRemoval = true,
+        fetch = FetchType.LAZY
+    )
     @JsonIgnore
     private Cuenta cuenta;
-    
+
     // ==========================================
     // MÉTODOS DE NEGOCIO
     // ==========================================
-    
+
     /**
      * Valida si un monto está dentro del presupuesto base
      */
@@ -155,60 +217,72 @@ public class Usuario {
         if (monto == null || presupuestoMensualBase == null) {
             return false;
         }
+
         return monto.compareTo(presupuestoMensualBase) <= 0;
     }
-    
+
     /**
      * Establece la ubicación del usuario
      */
     public void establecerUbicacion(Coordenada coordenada) {
         this.ubicacion = coordenada;
     }
-    
+
     /**
-     * Verifica si el usuario puede realizar otra transacción este mes
+     * Verifica si el usuario puede realizar otra transacción
      */
     public Boolean puedeRealizarTransaccion() {
-        return accountType.puedeRealizarTransaccion(transaccionesMesActual);
+        return accountType.puedeRealizarTransaccion(
+            transaccionesMesActual
+        );
     }
-    
+
     /**
-     * Incrementa el contador de transacciones del mes
+     * Registra una transacción
      */
     public void registrarTransaccion() {
+
         if (!puedeRealizarTransaccion()) {
             throw new LimiteTransaccionesException(
-                accountType, 
+                accountType,
                 transaccionesMesActual
             );
         }
+
         this.transaccionesMesActual++;
     }
-    
+
     /**
-     * Reinicia el contador mensual de transacciones
-     * (Se debe ejecutar al inicio de cada mes)
+     * Reinicia el contador mensual
      */
     public void reiniciarContadorMensual() {
         this.transaccionesMesActual = 0;
     }
-    
+
     /**
-     * Actualiza la fecha de último acceso
+     * Actualiza último acceso
      */
     public void actualizarUltimoAcceso() {
         this.ultimoAcceso = LocalDateTime.now();
     }
-    
+
     /**
      * Upgrade de cuenta
      */
     public void upgradeCuenta(AccountType nuevoTipo) {
+
+        if (nuevoTipo == null) {
+            throw new IllegalArgumentException(
+                "El tipo de cuenta no puede ser null"
+            );
+        }
+
         if (!nuevoTipo.esSuperiorA(this.accountType)) {
             throw new IllegalArgumentException(
                 "El nuevo tipo de cuenta debe ser superior al actual"
             );
         }
+
         this.accountType = nuevoTipo;
     }
-}
+}git 

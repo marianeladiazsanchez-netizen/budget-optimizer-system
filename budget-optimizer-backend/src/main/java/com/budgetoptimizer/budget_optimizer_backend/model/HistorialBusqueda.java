@@ -1,9 +1,10 @@
 package com.budgetoptimizer.budget_optimizer_backend.model;
 
-
 import java.time.LocalDateTime;
 
 import org.hibernate.annotations.CreationTimestamp;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -14,29 +15,33 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+
+import jakarta.validation.constraints.Min;
+
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
-@Data
 @Table(name = "historial_busquedas")
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class HistorialBusqueda {
 
-
-    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id", nullable = false)
-    private Usuario usuario; 
+    private Usuario usuario;
 
     @CreationTimestamp
-    @Column(updatable = false, nullable = false)
+    @Column(nullable = false, updatable = false)
     private LocalDateTime fecha;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -46,10 +51,17 @@ public class HistorialBusqueda {
     @Column(length = 1000)
     private String filtrosUsados;
 
+    @Min(0)
     private Integer resultadosEncontrados;
-    
-    // metodos relevantes 
-    public Boolean esReciente(LocalDateTime fechaComparacion) { // verifica si la busqueda es posterior a una fecha dada
+
+    /**
+     * Verifica si la búsqueda es reciente
+     */
+    public Boolean esReciente(LocalDateTime fechaComparacion) {
+
+        if (fechaComparacion == null || this.fecha == null) {
+            return false;
+        }
+
         return this.fecha.isAfter(fechaComparacion);
     }
-}

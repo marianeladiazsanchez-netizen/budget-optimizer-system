@@ -4,10 +4,17 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import com.budgetoptimizer.budget_optimizer_backend.enums.OptimizationType;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -19,38 +26,46 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
 import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "ml_optimizations")
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
-
 public class MLOptimization {
+
+    private static final ObjectMapper mapper = new ObjectMapper();
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
-    
+
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "budget_id")
-    private Presupuesto presupuesto; // Puede ser null si es análisis general
-    
-    // ⭐⭐⭐ COLUMNA JSONB - Respuesta completa de FastAPI
+    private Presupuesto presupuesto;
+
+    @NotBlank
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", nullable = false)
     private String mlResponse;
-    
+
     /* Ejemplo de JSON guardado:
     {
       "optimized_budget": 450,
@@ -69,83 +84,137 @@ public class MLOptimization {
       "model_version": "v1.2.3"
     }
     */
-    
+
+    @DecimalMin("0.0")
+    @DecimalMax("1.0")
     @Column(precision = 3, scale = 2)
-    private BigDecimal confidence; // 0.0 - 1.0
-    
+    private BigDecimal confidence;
+
+    @NotNull
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private OptimizationType tipo = OptimizationType.PREDICTION;
-    
+
     @Column(nullable = false)
-    private Boolean aplicada = false; // Si el usuario aplicó la sugerencia
-    
+    private Boolean aplicada = false;
+
     @CreationTimestamp
+    @Column(nullable = false, updatable = false)
     private LocalDateTime fechaCreacion;
-    
-    // Método helper para extraer empresas sugeridas del JSON
-    public List<String> getEmpresasSugeridas() throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode node = mapper.readTree(mlResponse);
+
+    /**
+     * Extrae empresas sugeridas
+     */
+    public List<String> getEmpresasSugeridas() {
+
         List<String> empresaIds = new ArrayList<>();
-        
-        if (node.has("recommended_businesses")) {
-            JsonNode businesses = node.get("recommended_businesses");
-            for (JsonNode business : businesses) {
-                empresaIds.add(business.get("id").asText());
+
+        try {
+
+            JsonNode node = mapper.readTree(mlResponse);
+
+            if (node.has("recommended_businesses")) {
+
+                JsonNode businesses = node.get("recommended_businesses");
+
+                for (JsonNode business : businesses) {
+
+                    if (business.has("id")) {
+                        empresaIds.add(business.get("id").asText());
+                    }
+                }
             }
+
+        } catch (JsonProcessingException e) {
+            return new ArrayList<>();
         }
-        
+
         return empresaIds;
     }
 
     /**
-     * Extrae el presupuesto optimizado del JSON
+     * Extrae presupuesto optimizado
      */
-    public BigDecimal getPresupuestoOptimizado() throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode node = mapper.readTree(mlResponse);
-        
-        if (node.has("optimized_budget")) {
-            return BigDecimal.valueOf(node.get("optimized_budget").asDouble());
+    public BigDecimal getPresupuestoOptimizado() {
+
+        try {
+
+            JsonNode node = mapper.readTree(mlResponse);
+
+            if (node.has("optimized_budget")) {
+
+                return BigDecimal.valueOf(
+                    node.get("optimized_budget").asDouble()
+                );
+            }
+
+        } catch (JsonProcessingException e) {
+            return null;
         }
-        
+
         return null;
     }
-    
+
     /**
-     * Extrae las alertas del JSON
+     * Extrae alertas
      */
-    public List<String> getAlertas() throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode node = mapper.readTree(mlResponse);
+    public List<String> getAlertas() {
+
         List<String> alertas = new ArrayList<>();
-        
-        if (node.has("alerts")) {
-            JsonNode alertsNode = node.get("alerts");
-            for (JsonNode alert : alertsNode) {
-                alertas.add(alert.asText());
+
+        try {
+
+            JsonNode node = mapper.readTree(mlResponse);
+
+            if (node.has("alerts")) {
+
+                JsonNode alertsNode = node.get("alerts");
+
+                for (JsonNode alert : alertsNode) {
+                    alertas.add(alert.asText());
+                }
             }
+
+        } catch (JsonProcessingException e) {
+            return new ArrayList<>();
         }
-        
+
         return alertas;
     }
-    
+
     /**
-     * Verifica si la optimización tiene alta confianza (>= 0.7)
+     * Verifica si tiene alta confianza
      */
     public Boolean tieneAltaConfianza() {
-        return confidence != null && confidence.compareTo(BigDecimal.valueOf(0.7)) >= 0;
+
+        return confidence != null
+            && confidence.compareTo(BigDecimal.valueOf(0.7)) >= 0;
     }
-    
+
     /**
-     * Verifica si ya fue aplicada por el usuario
+     * Verifica si fue aplicada
      */
     public Boolean fueAplicada() {
-        return aplicada != null && aplicada;
+
+        return Boolean.TRUE.equals(aplicada);
     }
 }
 
-
-
-
+/* Ejemplo de JSON guardado:
+    {
+      "optimized_budget": 450,
+      "recommended_categories": ["food", "transport"],
+      "suggested_category_limits": {
+        "food": 300,
+        "transport": 150
+      },
+      "recommended_businesses": [
+        {"id": "123", "name": "Restaurante A", "estimated_cost": 50},
+        {"id": "456", "name": "Gym B", "estimated_cost": 30}
+      ],
+      "predicted_savings": 50,
+      "alerts": ["Estás gastando 20% más en comida"],
+      "confidence": 0.85,
+      "model_version": "v1.2.3"
+    }
+    */

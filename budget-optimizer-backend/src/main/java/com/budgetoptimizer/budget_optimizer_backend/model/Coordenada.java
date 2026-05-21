@@ -2,14 +2,18 @@ package com.budgetoptimizer.budget_optimizer_backend.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
 @Embeddable
-@Data
 @AllArgsConstructor
 @NoArgsConstructor
+
 public class Coordenada {
     @Column(nullable = false)
      private double latitud;
@@ -18,7 +22,7 @@ public class Coordenada {
      
      // metodos para la funcionalidad de las coordenadas
      public double distanciaA(Coordenada otra) {
-          double radioTierra = 6371e3; // en metros
+          final radioTierra = 6371e3; // en metros
           double lat1Rad = Math.toRadians(this.latitud);
           double lat2Rad = Math.toRadians(otra.latitud);
           double deltaLatRad = Math.toRadians(otra.latitud - this.latitud);

@@ -1,11 +1,15 @@
 package com.budgetoptimizer.budget_optimizer_backend.model;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.hibernate.annotations.CreationTimestamp;
 
 import com.budgetoptimizer.budget_optimizer_backend.enums.AccountType;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -19,13 +23,17 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "cuentas")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Cuenta {
@@ -33,38 +41,62 @@ public class Cuenta {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @OneToOne
+    @JsonIgnore
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
     
-    @Column(nullable = false)
-    private Double saldo;
+    @NotNull
+    @PositiveOrZero
+    @Column(nullable = false, precision = 15, scale = 2)
+    private BigDecimal saldo = BigDecimal.ZERO;
     
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private AccountType tipoCuenta;
     
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "cuenta_preferencias",
         joinColumns = @JoinColumn(name = "cuenta_id"),
         inverseJoinColumns = @JoinColumn(name = "categoria_id")
     )
-    private Set<Categoria> preferencias;
-    
-     @CreationTimestamp
-     private LocalDateTime fechaCreacion;
+    private Set<Categoria> preferencias = new HashSet<>();
 
-     // metodos relevantes
+    @CreationTimestamp
+    private LocalDateTime fechaCreacion;
 
-     // metodo para suscribirse a una categoria
-     public void suscribirseACategoria(Categoria categoria) {
-          this.preferencias.add(categoria);
-     }
+    /**
+     * Suscribirse a una categoría
+     */
+    public void suscribirseACategoria(Categoria categoria) {
 
-     // metodo para calcular el presupuesto disponible basado en el saldo y las
-     // preferencias
-     public Double calcularPresupuestoDisponible() {
-          double factorPreferencias = 1 + (this.preferencias.size() * 0.05); // 5% extra por cada categoria preferida
-          return this.saldo * factorPreferencias;
-     }
+        if (categoria != null) {
+            this.preferencias.add(categoria);
+        }
+    }
+
+    /**
+     * Remover categoría preferida
+     */
+    public void removerCategoria(Categoria categoria) {
+
+        if (categoria != null) {
+            this.preferencias.remove(categoria);
+        }
+    }
+
+    /**
+     * Calcula presupuesto disponible basado en preferencias
+     */
+    public BigDecimal calcularPresupuestoDisponible() {
+
+        BigDecimal factorPreferencias =
+                BigDecimal.valueOf(
+                        1 + (this.preferencias.size() * 0.05)
+                );
+
+        return this.saldo.multiply(factorPreferencias)
+                .setScale(2, RoundingMode.HALF_UP);
+    }
 }

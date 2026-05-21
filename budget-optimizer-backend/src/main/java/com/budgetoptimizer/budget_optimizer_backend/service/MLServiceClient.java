@@ -1,13 +1,17 @@
 package com.budgetoptimizer.budget_optimizer_backend.service;
 
-
 import com.budgetoptimizer.budget_optimizer_backend.dto.ml.*;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+
 import reactor.core.publisher.Mono;
- 
+
 import java.time.Duration;
 
 @Slf4j
@@ -17,100 +21,169 @@ public class MLServiceClient {
     private final WebClient webClient;
 
     public MLServiceClient(
-            @Value("${ml.service.url:http://localhost:8000}") String mlServiceUrl,
+            @Value("${ml.service.url:http://ml-service:8000}") String mlServiceUrl,
             WebClient.Builder webClientBuilder
     ) {
+
+        log.info("ML Service URL: {}", mlServiceUrl);
+
         this.webClient = webClientBuilder
                 .baseUrl(mlServiceUrl)
                 .build();
     }
 
-    /**
-     * Analiza un presupuesto y obtiene recomendaciones de IA
-     */
-    public Mono<AnalisisPresupuestoResponse> analizarPresupuesto(AnalisisPresupuestoRequest request) {
-        log.info("Solicitando análisis de presupuesto para usuario: {}", request.getNombre());
-        
+    // ==========================================
+    // ANALIZAR PRESUPUESTO
+    // ==========================================
+
+    public Mono<AnalisisPresupuestoResponse> analizarPresupuesto(
+            AnalisisPresupuestoRequest request
+    ) {
+
+        log.info("Analizando presupuesto para usuario: {}", request.getNombre());
+
         return webClient.post()
                 .uri("/api/ml/analizar")
                 .bodyValue(request)
                 .retrieve()
+
+                .onStatus(
+                        HttpStatus::isError,
+                        response -> response.bodyToMono(String.class)
+                                .flatMap(errorBody -> {
+
+                                    log.error("Error ML Service: {}", errorBody);
+
+                                    return Mono.error(
+                                            new RuntimeException(
+                                                    "Error del servicio ML: " + errorBody
+                                            )
+                                    );
+                                })
+                )
+
                 .bodyToMono(AnalisisPresupuestoResponse.class)
+
                 .timeout(Duration.ofSeconds(30))
-                .doOnSuccess(response -> 
-                    log.info("Análisis completado exitosamente para: {}", request.getNombre()))
-                .doOnError(error -> 
-                    log.error("Error al analizar presupuesto: {}", error.getMessage()));
+
+                .doOnSuccess(response ->
+                        log.info("Análisis completado correctamente")
+                )
+
+                .doOnError(error ->
+                        log.error("Error analizando presupuesto", error)
+                );
     }
 
-    /**
-     * Predice gastos futuros basado en datos históricos
-     */
-    public Mono<PrediccionGastosResponse> predecirGastos(PrediccionGastosRequest request) {
-        log.info("Solicitando predicción de gastos para usuario ID: {}", request.getUsuarioId());
-        
+    // ==========================================
+    // PREDECIR GASTOS
+    // ==========================================
+
+    public Mono<PrediccionGastosResponse> predecirGastos(
+            PrediccionGastosRequest request
+    ) {
+
+        log.info("Predicción de gastos para usuario ID: {}", request.getUsuarioId());
+
         return webClient.post()
                 .uri("/api/ml/predict")
                 .bodyValue(request)
                 .retrieve()
                 .bodyToMono(PrediccionGastosResponse.class)
                 .timeout(Duration.ofSeconds(45))
-                .doOnSuccess(response -> 
-                    log.info("Predicción completada: {} meses predichos", 
-                        response.getPredicciones().size()))
-                .doOnError(error -> 
-                    log.error("Error al predecir gastos: {}", error.getMessage()));
+
+                .doOnSuccess(response ->
+                        log.info(
+                                "Predicción completada: {} registros",
+                                response.getPredicciones().size()
+                        )
+                )
+
+                .doOnError(error ->
+                        log.error("Error en predicción", error)
+                );
     }
 
-    /**
-     * Optimiza la distribución del presupuesto
-     */
+    // ==========================================
+    // OPTIMIZAR PRESUPUESTO
+    // ==========================================
+
     public Mono<OptimizacionPresupuestoResponse> optimizarPresupuesto(
-            OptimizacionPresupuestoRequest request) {
-        log.info("Solicitando optimización para presupuesto de ${}", request.getMontoTotal());
-        
+            OptimizacionPresupuestoRequest request
+    ) {
+
+        log.info("Optimizando presupuesto: {}", request.getMontoTotal());
+
         return webClient.post()
                 .uri("/api/ml/optimize")
                 .bodyValue(request)
                 .retrieve()
                 .bodyToMono(OptimizacionPresupuestoResponse.class)
                 .timeout(Duration.ofSeconds(30))
-                .doOnSuccess(response -> 
-                    log.info("Optimización completada. Ahorro potencial: ${}", 
-                        response.getAhorroPotencial()))
-                .doOnError(error -> 
-                    log.error("Error al optimizar presupuesto: {}", error.getMessage()));
+
+                .doOnSuccess(response ->
+                        log.info(
+                                "Optimización completada. Ahorro: {}",
+                                response.getAhorroPotencial()
+                        )
+                )
+
+                .doOnError(error ->
+                        log.error("Error optimizando presupuesto", error)
+                );
     }
 
-    /**
-     * Detecta anomalías en los patrones de gasto
-     */
-    public Mono<DeteccionAnomaliaResponse> detectarAnomalias(DeteccionAnomaliaRequest request) {
-        log.info("Solicitando detección de anomalías para usuario ID: {}", request.getUsuarioId());
-        
+    // ==========================================
+    // DETECTAR ANOMALÍAS
+    // ==========================================
+
+    public Mono<DeteccionAnomaliaResponse> detectarAnomalias(
+            DeteccionAnomaliaRequest request
+    ) {
+
+        log.info("Detectando anomalías usuario ID: {}", request.getUsuarioId());
+
         return webClient.post()
                 .uri("/api/ml/anomalias")
                 .bodyValue(request)
                 .retrieve()
                 .bodyToMono(DeteccionAnomaliaResponse.class)
                 .timeout(Duration.ofSeconds(30))
-                .doOnSuccess(response -> 
-                    log.info("Detección completada: {} anomalías encontradas", 
-                        response.getAnomalias().size()))
-                .doOnError(error -> 
-                    log.error("Error al detectar anomalías: {}", error.getMessage()));
+
+                .doOnSuccess(response ->
+                        log.info(
+                                "Anomalías encontradas: {}",
+                                response.getAnomalias().size()
+                        )
+                )
+
+                .doOnError(error ->
+                        log.error("Error detectando anomalías", error)
+                );
     }
 
-    /**
-     * Verifica el estado del servicio ML
-     */
+    // ==========================================
+    // HEALTH CHECK
+    // ==========================================
+
     public Mono<Boolean> checkHealth() {
+
         return webClient.get()
                 .uri("/health")
                 .retrieve()
                 .bodyToMono(HealthResponse.class)
-                .map(response -> "ok".equalsIgnoreCase(response.getStatus()))
+
+                .map(response ->
+                        "ok".equalsIgnoreCase(response.getStatus())
+                )
+
                 .timeout(Duration.ofSeconds(5))
-                .onErrorReturn(false);
+
+                .onErrorResume(error -> {
+
+                    log.error("ML Service offline", error);
+
+                    return Mono.just(false);
+                });
     }
 }

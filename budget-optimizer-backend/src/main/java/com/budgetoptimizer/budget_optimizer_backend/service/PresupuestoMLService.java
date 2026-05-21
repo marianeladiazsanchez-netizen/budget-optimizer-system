@@ -6,13 +6,16 @@ import com.budgetoptimizer.budget_optimizer_backend.model.Presupuesto;
 import com.budgetoptimizer.budget_optimizer_backend.model.Usuario;
 import com.budgetoptimizer.budget_optimizer_backend.repository.ExpenseRepository;
 import com.budgetoptimizer.budget_optimizer_backend.repository.PresupuestoRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -27,26 +30,26 @@ public class PresupuestoMLService {
     private final ExpenseRepository expenseRepository;
 
     /**
-     * Analiza un presupuesto con IA y retorna recomendaciones
-     * VERSIÓN SÍNCRONA (bloquea hasta obtener respuesta)
+     * Analiza un presupuesto con IA
      */
     public AnalisisPresupuestoResponse analizarPresupuestoConIA(Long presupuestoId) {
-        log.info("🤖 Analizando presupuesto {} con IA", presupuestoId);
 
-        // 1. Obtener presupuesto
+        log.info("Analizando presupuesto {} con IA", presupuestoId);
+
         Presupuesto presupuesto = presupuestoRepository.findById(presupuestoId)
-                .orElseThrow(() -> new RuntimeException("Presupuesto no encontrado"));
+                .orElseThrow(() ->
+                        new RuntimeException("Presupuesto no encontrado con ID: " + presupuestoId));
 
-        // 2. Obtener usuario
         Usuario usuario = presupuesto.getUsuario();
 
-        // 3. Obtener gastos del presupuesto
         List<Expense> gastos = expenseRepository.findByPresupuestoId(presupuestoId);
 
-        // 4. Construir prompt para Gemini
-        String prompt = construirPromptAnalisis(presupuesto, usuario, gastos);
+        String prompt = construirPromptAnalisis(
+                presupuesto,
+                usuario,
+                gastos
+        );
 
-        // 5. Crear request
         AnalisisPresupuestoRequest request = AnalisisPresupuestoRequest.builder()
                 .nombre(usuario.getNombre())
                 .prompt(prompt)
@@ -54,35 +57,56 @@ public class PresupuestoMLService {
                 .presupuestoId(presupuestoId)
                 .build();
 
-        // 6. Llamar al servicio ML (bloqueando con .block())
         try {
+
             AnalisisPresupuestoResponse response = mlServiceClient
                     .analizarPresupuesto(request)
-                    .block(); // ⚠️ Bloquea hasta obtener respuesta
-            
-            log.info("✅ Análisis completado para presupuesto {}", presupuestoId);
+                    .block();
+
+            if (response == null) {
+                throw new RuntimeException("El servicio ML devolvió una respuesta vacía");
+            }
+
+            log.info("Análisis completado correctamente");
+
             return response;
+
         } catch (Exception e) {
-            log.error("❌ Error al analizar presupuesto: {}", e.getMessage());
-            throw new RuntimeException("Error al analizar presupuesto con IA", e);
+
+            log.error("Error analizando presupuesto: {}", e.getMessage(), e);
+
+            throw new RuntimeException(
+                    "Error al analizar presupuesto con IA",
+                    e
+            );
         }
     }
 
     /**
      * Predice gastos futuros
      */
-    public PrediccionGastosResponse predecirGastosFuturos(Long usuarioId, Integer mesesAdelante) {
-        log.info("🔮 Prediciendo gastos para usuario {} - {} meses adelante", usuarioId, mesesAdelante);
+    public PrediccionGastosResponse predecirGastosFuturos(
+            Long usuarioId,
+            Integer mesesAdelante
+    ) {
 
-        // 1. Obtener gastos históricos
+        log.info(
+                "Prediciendo gastos para usuario {} a {} meses",
+                usuarioId,
+                mesesAdelante
+        );
+
         List<Expense> gastos = expenseRepository.findByUsuarioId(usuarioId);
 
-        if (gastos.isEmpty()) {
-            throw new RuntimeException("No hay datos históricos suficientes para predicción");
+        if (gastos == null || gastos.isEmpty()) {
+            throw new RuntimeException(
+                    "No existen gastos históricos suficientes"
+            );
         }
 
-        // 2. Convertir a formato ML
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
+        DateTimeFormatter formatter =
+                DateTimeFormatter.ofPattern("yyyy-MM");
+
         List<GastoHistorico> gastosHistoricos = gastos.stream()
                 .map(gasto -> GastoHistorico.builder()
                         .categoria(gasto.getCategoria().getNombre())
@@ -92,82 +116,144 @@ public class PresupuestoMLService {
                         .build())
                 .collect(Collectors.toList());
 
-        // 3. Crear request
-        PrediccionGastosRequest request = PrediccionGastosRequest.builder()
-                .usuarioId(usuarioId)
-                .gastosHistoricos(gastosHistoricos)
-                .mesesAdelante(mesesAdelante)
-                .build();
+        PrediccionGastosRequest request =
+                PrediccionGastosRequest.builder()
+                        .usuarioId(usuarioId)
+                        .gastosHistoricos(gastosHistoricos)
+                        .mesesAdelante(mesesAdelante)
+                        .build();
 
-        // 4. Llamar servicio ML (bloqueando)
         try {
-            PrediccionGastosResponse response = mlServiceClient
-                    .predecirGastos(request)
-                    .block();
-            
-            log.info("✅ Predicción completada: {} meses", response.getPredicciones().size());
+
+            PrediccionGastosResponse response =
+                    mlServiceClient
+                            .predecirGastos(request)
+                            .block();
+
+            if (response == null) {
+                throw new RuntimeException(
+                        "El servicio ML devolvió una respuesta vacía"
+                );
+            }
+
+            log.info(
+                    "Predicción completada: {} meses",
+                    response.getPredicciones().size()
+            );
+
             return response;
+
         } catch (Exception e) {
-            log.error("❌ Error al predecir gastos: {}", e.getMessage());
-            throw new RuntimeException("Error al predecir gastos", e);
+
+            log.error(
+                    "Error prediciendo gastos: {}",
+                    e.getMessage(),
+                    e
+            );
+
+            throw new RuntimeException(
+                    "Error al predecir gastos",
+                    e
+            );
         }
     }
 
     /**
-     * Optimiza la distribución del presupuesto
+     * Optimiza distribución del presupuesto
      */
-    public OptimizacionPresupuestoResponse optimizarDistribucion(Long presupuestoId) {
-        log.info("⚙️ Optimizando distribución del presupuesto {}", presupuestoId);
+    public OptimizacionPresupuestoResponse optimizarDistribucion(
+            Long presupuestoId
+    ) {
 
-        // 1. Obtener presupuesto
+        log.info(
+                "Optimizando presupuesto {}",
+                presupuestoId
+        );
+
         Presupuesto presupuesto = presupuestoRepository.findById(presupuestoId)
-                .orElseThrow(() -> new RuntimeException("Presupuesto no encontrado"));
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Presupuesto no encontrado"
+                        ));
 
-        // 2. Obtener categorías y gastos actuales
-        List<Expense> gastos = expenseRepository.findByPresupuestoId(presupuestoId);
+        List<Expense> gastos =
+                expenseRepository.findByPresupuestoId(presupuestoId);
 
         List<String> categorias = gastos.stream()
                 .map(g -> g.getCategoria().getNombre())
                 .distinct()
                 .collect(Collectors.toList());
 
-        // 3. Crear request
-        OptimizacionPresupuestoRequest request = OptimizacionPresupuestoRequest.builder()
-                .montoTotal(presupuesto.getMontoTotal().doubleValue())
-                .categorias(categorias)
-                .prioridades(null) // Se puede agregar lógica de prioridades
-                .gastosActuales(null) // Se puede agregar gastos actuales
-                .build();
+        OptimizacionPresupuestoRequest request =
+                OptimizacionPresupuestoRequest.builder()
+                        .montoTotal(
+                                presupuesto.getMontoTotal().doubleValue()
+                        )
+                        .categorias(categorias)
+                        .prioridades(Collections.emptyMap())
+                        .gastosActuales(Collections.emptyMap())
+                        .build();
 
-        // 4. Llamar servicio ML (bloqueando)
         try {
-            OptimizacionPresupuestoResponse response = mlServiceClient
-                    .optimizarPresupuesto(request)
-                    .block();
-            
-            log.info("✅ Optimización completada. Ahorro: ${}", response.getAhorroPotencial());
+
+            OptimizacionPresupuestoResponse response =
+                    mlServiceClient
+                            .optimizarPresupuesto(request)
+                            .block();
+
+            if (response == null) {
+                throw new RuntimeException(
+                        "El servicio ML devolvió una respuesta vacía"
+                );
+            }
+
+            log.info(
+                    "Optimización completada. Ahorro potencial: {}",
+                    response.getAhorroPotencial()
+            );
+
             return response;
+
         } catch (Exception e) {
-            log.error("❌ Error al optimizar presupuesto: {}", e.getMessage());
-            throw new RuntimeException("Error al optimizar presupuesto", e);
+
+            log.error(
+                    "Error optimizando presupuesto: {}",
+                    e.getMessage(),
+                    e
+            );
+
+            throw new RuntimeException(
+                    "Error al optimizar presupuesto",
+                    e
+            );
         }
     }
 
     /**
-     * Detecta anomalías en gastos
+     * Detecta anomalías
      */
-    public DeteccionAnomaliaResponse detectarAnomalias(Long usuarioId, Integer diasVentana) {
-        log.info("🔍 Detectando anomalías para usuario {}", usuarioId);
+    public DeteccionAnomaliaResponse detectarAnomalias(
+            Long usuarioId,
+            Integer diasVentana
+    ) {
 
-        // 1. Obtener gastos
-        List<Expense> gastos = expenseRepository.findByUsuarioId(usuarioId);
+        log.info(
+                "Detectando anomalías para usuario {}",
+                usuarioId
+        );
 
-        if (gastos.isEmpty()) {
-            throw new RuntimeException("No hay gastos para analizar");
+        List<Expense> gastos =
+                expenseRepository.findByUsuarioId(usuarioId);
+
+        if (gastos == null || gastos.isEmpty()) {
+            throw new RuntimeException(
+                    "No hay gastos para analizar"
+            );
         }
 
-        // 2. Convertir a formato  
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
+        DateTimeFormatter formatter =
+                DateTimeFormatter.ofPattern("yyyy-MM");
+
         List<GastoHistorico> gastosHistoricos = gastos.stream()
                 .map(gasto -> GastoHistorico.builder()
                         .categoria(gasto.getCategoria().getNombre())
@@ -177,65 +263,108 @@ public class PresupuestoMLService {
                         .build())
                 .collect(Collectors.toList());
 
-        // 3. Crear request
-        DeteccionAnomaliaRequest request = DeteccionAnomaliaRequest.builder()
-                .usuarioId(usuarioId)
-                .gastos(gastosHistoricos)
-                .ventanaTiempo(diasVentana)
-                .build();
+        DeteccionAnomaliaRequest request =
+                DeteccionAnomaliaRequest.builder()
+                        .usuarioId(usuarioId)
+                        .gastos(gastosHistoricos)
+                        .ventanaTiempo(diasVentana)
+                        .build();
 
-        // 4. Llamar servicio ML (bloqueando)
         try {
-            DeteccionAnomaliaResponse response = mlServiceClient
-                    .detectarAnomalias(request)
-                    .block();
-            
-            log.info("✅ Detección completada: {} anomalías encontradas", 
-                response.getTotalAnomalias());
+
+            DeteccionAnomaliaResponse response =
+                    mlServiceClient
+                            .detectarAnomalias(request)
+                            .block();
+
+            if (response == null) {
+                throw new RuntimeException(
+                        "El servicio ML devolvió una respuesta vacía"
+                );
+            }
+
+            log.info(
+                    "Detección completada: {} anomalías",
+                    response.getTotalAnomalias()
+            );
+
             return response;
+
         } catch (Exception e) {
-            log.error("❌ Error al detectar anomalías: {}", e.getMessage());
-            throw new RuntimeException("Error al detectar anomalías", e);
+
+            log.error(
+                    "Error detectando anomalías: {}",
+                    e.getMessage(),
+                    e
+            );
+
+            throw new RuntimeException(
+                    "Error al detectar anomalías",
+                    e
+            );
         }
     }
 
     /**
-     * Verifica salud del servicio ML
+     * Health check del servicio ML
      */
     public boolean isMLServiceHealthy() {
+
         try {
-            Boolean result = mlServiceClient.checkHealth().block();
+
+            Boolean result =
+                    mlServiceClient.checkHealth().block();
+
             return result != null && result;
+
         } catch (Exception e) {
-            log.error("❌ Error en health check: {}", e.getMessage());
+
+            log.error(
+                    "Error verificando ML Service: {}",
+                    e.getMessage(),
+                    e
+            );
+
             return false;
         }
     }
 
-    // ==========================================
+    // =====================================================
     // MÉTODOS AUXILIARES
-    // ==========================================
+    // =====================================================
 
-    private String construirPromptAnalisis(Presupuesto presupuesto, Usuario usuario, List<Expense> gastos) {
+    private String construirPromptAnalisis(
+            Presupuesto presupuesto,
+            Usuario usuario,
+            List<Expense> gastos
+    ) {
+
         BigDecimal totalGastado = gastos.stream()
                 .map(Expense::getMonto)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal porcentajeUsado = presupuesto.getMontoTotal().compareTo(BigDecimal.ZERO) > 0
-                ? totalGastado.divide(presupuesto.getMontoTotal(), 2, RoundingMode.HALF_UP)
-                        .multiply(BigDecimal.valueOf(100))
-                : BigDecimal.ZERO;
+        BigDecimal porcentajeUsado =
+                presupuesto.getMontoTotal()
+                        .compareTo(BigDecimal.ZERO) > 0
+                        ? totalGastado.divide(
+                                presupuesto.getMontoTotal(),
+                                2,
+                                RoundingMode.HALF_UP
+                        ).multiply(BigDecimal.valueOf(100))
+                        : BigDecimal.ZERO;
 
         return String.format(
-                "Usuario: %s\n" +
-                "Ciudad: %s, %s\n" +
-                "Presupuesto: %s\n" +
-                "Período: %s\n" +
-                "Monto Total: $%.2f\n" +
-                "Total Gastado: $%.2f (%.1f%%)\n" +
-                "Restante: $%.2f\n" +
-                "Total de Gastos: %d\n" +
-                "Categorías principales: %s",
+                """
+                Usuario: %s
+                Ciudad: %s, %s
+                Presupuesto: %s
+                Periodo: %s
+                Monto total: $%.2f
+                Total gastado: $%.2f (%.1f%%)
+                Restante: $%.2f
+                Total gastos: %d
+                Categorías principales: %s
+                """,
                 usuario.getNombre(),
                 usuario.getCiudad(),
                 usuario.getPais(),
@@ -251,16 +380,30 @@ public class PresupuestoMLService {
     }
 
     private String obtenerCategoriasTop(List<Expense> gastos) {
-        Map<String, BigDecimal> categoriasPorMonto = gastos.stream()
-                .collect(Collectors.groupingBy(
-                        g -> g.getCategoria().getNombre(),
-                        Collectors.reducing(BigDecimal.ZERO, Expense::getMonto, BigDecimal::add)
-                ));
-        
-        return categoriasPorMonto.entrySet().stream()
-                .sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue()))
+
+        Map<String, BigDecimal> categoriasPorMonto =
+                gastos.stream()
+                        .collect(Collectors.groupingBy(
+                                g -> g.getCategoria().getNombre(),
+                                Collectors.reducing(
+                                        BigDecimal.ZERO,
+                                        Expense::getMonto,
+                                        BigDecimal::add
+                                )
+                        ));
+
+        return categoriasPorMonto.entrySet()
+                .stream()
+                .sorted((e1, e2) ->
+                        e2.getValue().compareTo(e1.getValue()))
                 .limit(3)
-                .map(e -> String.format("%s ($%.2f)", e.getKey(), e.getValue()))
+                .map(e ->
+                        String.format(
+                                "%s ($%.2f)",
+                                e.getKey(),
+                                e.getValue()
+                        )
+                )
                 .collect(Collectors.joining(", "));
     }
 }

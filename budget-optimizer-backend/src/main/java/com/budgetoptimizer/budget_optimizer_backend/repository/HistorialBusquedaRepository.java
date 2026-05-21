@@ -18,4 +18,4 @@ public interface HistorialBusquedaRepository
     List<HistorialBusqueda> findByUsuarioIdOrderByFechaDesc(Long usuarioId);
 
     List<HistorialBusqueda> findTop10ByUsuarioIdOrderByFechaDesc(Long usuarioId);
-        }
+}

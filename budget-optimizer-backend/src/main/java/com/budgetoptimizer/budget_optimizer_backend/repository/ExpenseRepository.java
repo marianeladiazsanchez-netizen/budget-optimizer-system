@@ -165,3 +165,4 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
     List<Object[]> findPromedioGastoPorCategoria(
             @Param("usuarioId") Long usuarioId
     );
+}

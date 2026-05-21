@@ -285,4 +285,4 @@ public class Usuario {
 
         this.accountType = nuevoTipo;
     }
-}git 
+}

@@ -25,8 +25,8 @@ public class UsuarioResponseDTO {
     private String telefono;
     
     // Ubicación
-    private Double latitud;
-    private Double longitud;
+    private BigDecimal latitud;
+    private BigDecimal longitud;
     private String ciudad;
     private String pais;
     
@@ -38,7 +38,7 @@ public class UsuarioResponseDTO {
     private Integer limiteTransaccionesMes;
     
     // Beneficios de la cuenta
-    private Double descuentoPorcentaje;
+    private BigDecimal descuentoPorcentaje;
     private Boolean tieneBeneficios;
     private Boolean puedeAdministrarEmpresas;
     

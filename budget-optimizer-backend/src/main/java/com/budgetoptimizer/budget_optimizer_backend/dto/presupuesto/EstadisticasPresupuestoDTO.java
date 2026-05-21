@@ -47,6 +47,6 @@ public class EstadisticasPresupuestoDTO {
     public static class GastoCategoria {
         private String categoria;
         private BigDecimal monto;
-        private Double porcentaje;
+        private BigDecimal porcentaje;
     }
 }

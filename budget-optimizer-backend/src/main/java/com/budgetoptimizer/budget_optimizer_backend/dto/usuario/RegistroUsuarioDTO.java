@@ -46,8 +46,8 @@ public class RegistroUsuarioDTO {
     private String pais;
     
     // COORDENADAS OPCIONALES - Provistas por el frontend desde tu API Python
-    private Double latitud;
-    private Double longitud;
+    private BigDecimal latitud;
+    private BigDecimal longitud;
     
     @NotNull(message = "El presupuesto mensual base es obligatorio")
     @DecimalMin(value = "0.0", inclusive = false, message = "El presupuesto debe ser mayor a 0")

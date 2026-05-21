@@ -1,76 +1,128 @@
 package com.budgetoptimizer.budget_optimizer_backend.repository;
 
-import com.budgetoptimizer.budget_optimizer_backend.model.Usuario;
 import com.budgetoptimizer.budget_optimizer_backend.enums.AccountType;
+import com.budgetoptimizer.budget_optimizer_backend.model.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
-    
+
     // ==========================================
-    // QUERY METHODS - SPRING LOS GENERA AUTOMÁTICAMENTE
+    // BÚSQUEDAS BÁSICAS
     // ==========================================
-    
-    // Búsqueda básica
+
     Optional<Usuario> findByEmail(String email);
+
     boolean existsByEmail(String email);
+
     List<Usuario> findByNombreContainingIgnoreCase(String texto);
-    
-    // Por tipo de cuenta
+
+    // ==========================================
+    // CONSULTAS POR TIPO DE CUENTA
+    // ==========================================
+
     List<Usuario> findByAccountType(AccountType accountType);
-    long countByAccountType(AccountType accountType);
+
     List<Usuario> findByAccountTypeIn(List<AccountType> types);
-    
-    // Por estado
-    List<Usuario> findByActivoTrue();
-    List<Usuario> findByActivoFalse();
+
     List<Usuario> findByAccountTypeAndActivoTrue(AccountType type);
-    
-    // Por presupuesto
-    List<Usuario> findByPresupuestoMensualBaseGreaterThan(Double monto);
-    List<Usuario> findByPresupuestoMensualBaseBetween(Double min, Double max);
-    List<Usuario> findByPresupuestoMensualBaseLessThan(Double monto);
-    
-    // Por fechas
-    List<Usuario> findByFechaCreacionAfter(LocalDateTime fecha);
-    List<Usuario> findByFechaCreacionBetween(LocalDateTime inicio, LocalDateTime fin);
-    
-    // Ordenamiento
-    List<Usuario> findTop10ByActivoTrueOrderByPresupuestoMensualBaseDesc();
-    List<Usuario> findByActivoTrueOrderByFechaCreacionDesc();
-    
+
+    long countByAccountType(AccountType accountType);
+
     // ==========================================
-    // @Query SOLO PARA CASOS COMPLEJOS
+    // CONSULTAS POR ESTADO
     // ==========================================
-    
-    /**
-     * Busca usuarios cerca de una ubicación
-     * Usa @Query porque involucra cálculo geoespacial complejo
-     */
-    @Query("SELECT u FROM Usuario u WHERE " +
-           "6371 * acos(cos(radians(:lat)) * cos(radians(u.ubicacion.latitud)) * " +
-           "cos(radians(u.ubicacion.longitud) - radians(:lng)) + " +
-           "sin(radians(:lat)) * sin(radians(u.ubicacion.latitud))) <= :radioKm " +
-           "AND u.activo = true")
-    List<Usuario> findUsuariosCercanos(
-        @Param("lat") double latitud,
-        @Param("lng") double longitud,
-        @Param("radioKm") double radioKm
+
+    List<Usuario> findByActivoTrue();
+
+    List<Usuario> findByActivoFalse();
+
+    long countByActivoTrue();
+
+    // ==========================================
+    // CONSULTAS POR PRESUPUESTO
+    // ==========================================
+
+    List<Usuario> findByPresupuestoMensualBaseGreaterThan(
+            BigDecimal monto
     );
-    
+
+    List<Usuario> findByPresupuestoMensualBaseBetween(
+            BigDecimal min,
+            BigDecimal max
+    );
+
+    List<Usuario> findByPresupuestoMensualBaseLessThan(
+            BigDecimal monto
+    );
+
+    // ==========================================
+    // CONSULTAS POR FECHAS
+    // ==========================================
+
+    List<Usuario> findByFechaCreacionAfter(LocalDateTime fecha);
+
+    List<Usuario> findByFechaCreacionBetween(
+            LocalDateTime inicio,
+            LocalDateTime fin
+    );
+
+    List<Usuario> findByUltimoAccesoAfter(LocalDateTime fecha);
+
+    // ==========================================
+    // ORDENAMIENTO
+    // ==========================================
+
+    List<Usuario> findTop10ByActivoTrueOrderByPresupuestoMensualBaseDesc();
+
+    List<Usuario> findByActivoTrueOrderByFechaCreacionDesc();
+
+    // ==========================================
+    // CONSULTAS GEOESPACIALES
+    // ==========================================
+
     /**
-     * Usuarios sin presupuestos (requiere LEFT JOIN)
-     * Usa @Query porque necesita comprobar relación NULL
+     * Busca usuarios cercanos usando fórmula Haversine
      */
-    @Query("SELECT u FROM Usuario u WHERE " +
-           "u.activo = true AND " +
-           "SIZE(u.presupuestos) = 0")
+    @Query("""
+        SELECT u
+        FROM Usuario u
+        WHERE
+        6371 * acos(
+            cos(radians(:lat)) *
+            cos(radians(u.ubicacion.latitud)) *
+            cos(radians(u.ubicacion.longitud) - radians(:lng)) +
+            sin(radians(:lat)) *
+            sin(radians(u.ubicacion.latitud))
+        ) <= :radioKm
+        AND u.activo = true
+    """)
+    List<Usuario> findUsuariosCercanos(
+            @Param("lat") double latitud,
+            @Param("lng") double longitud,
+            @Param("radioKm") double radioKm
+    );
+
+    // ==========================================
+    // CONSULTAS PERSONALIZADAS
+    // ==========================================
+
+    /**
+     * Usuarios activos sin presupuestos
+     */
+    @Query("""
+        SELECT u
+        FROM Usuario u
+        WHERE u.activo = true
+        AND SIZE(u.presupuestos) = 0
+    """)
     List<Usuario> findUsuariosSinPresupuestos();
 }

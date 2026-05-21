@@ -1,10 +1,11 @@
 package com.budgetoptimizer.budget_optimizer_backend.repository;
 
-import com.budgetoptimizer.budget_optimizer_backend.model.Categoria;
 import com.budgetoptimizer.budget_optimizer_backend.enums.CategoryType;
 import com.budgetoptimizer.budget_optimizer_backend.enums.TipoEmpresa;
+import com.budgetoptimizer.budget_optimizer_backend.model.Categoria;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -12,45 +13,77 @@ import java.util.Optional;
 
 @Repository
 public interface CategoriaRepository extends JpaRepository<Categoria, Long> {
-    
+
     // ==========================================
-    // QUERY METHODS AUTOMÁTICOS
+    // BÚSQUEDAS BÁSICAS
     // ==========================================
-    
-    // Búsqueda básica
+
     Optional<Categoria> findByNombre(String nombre);
+
     boolean existsByNombreIgnoreCase(String nombre);
+
     List<Categoria> findByNombreContainingIgnoreCase(String texto);
-    
-    // Por estado
+
+    // ==========================================
+    // FILTROS POR ESTADO
+    // ==========================================
+
     List<Categoria> findByActivaTrue();
+
     List<Categoria> findByActivaFalse();
-    
-    // Por tipo (UN SOLO TIPO)
+
+    // ==========================================
+    // FILTROS POR TIPO
+    // ==========================================
+
     List<Categoria> findByTipo(CategoryType tipo);
+
     List<Categoria> findByActivaTrueAndTipo(CategoryType tipo);
-    
-    // Por tipo de empresa
+
+    /**
+     * Categorías activas por múltiples tipos
+     */
+    List<Categoria> findByActivaTrueAndTipoIn(List<CategoryType> tipos);
+
+    // ==========================================
+    // FILTROS POR TIPO DE EMPRESA
+    // ==========================================
+
     List<Categoria> findByTipoEmpresaAsociada(TipoEmpresa tipoEmpresa);
+
     List<Categoria> findByTipoEmpresaAsociadaIsNull();
+
     List<Categoria> findByTipoEmpresaAsociadaIsNullAndActivaTrue();
-    
+
     // ==========================================
-    // @Query PARA LÓGICA OR
+    // CONSULTAS PERSONALIZADAS
     // ==========================================
-    
+
     /**
-     * Categorías para gastos (EXPENSE o BOTH)
-     * Usa @Query porque necesita OR con valores específicos del enum
+     * Categorías válidas para gastos
+     * (EXPENSE o BOTH)
      */
-    @Query("SELECT c FROM Categoria c WHERE " +
-           "(c.tipo = 'EXPENSE' OR c.tipo = 'BOTH') AND c.activa = true")
-    List<Categoria> findCategoriasParaGastos();
-    
+    @Query("""
+        SELECT c
+        FROM Categoria c
+        WHERE c.activa = true
+        AND c.tipo IN :tipos
+    """)
+    List<Categoria> findCategoriasParaGastos(
+            @Param("tipos") List<CategoryType> tipos
+    );
+
     /**
-     * Categorías para empresas (BUSINESS o BOTH)
+     * Categorías válidas para empresas
+     * (BUSINESS o BOTH)
      */
-    @Query("SELECT c FROM Categoria c WHERE " +
-           "(c.tipo = 'BUSINESS' OR c.tipo = 'BOTH') AND c.activa = true")
-    List<Categoria> findCategoriasParaEmpresas();
+    @Query("""
+        SELECT c
+        FROM Categoria c
+        WHERE c.activa = true
+        AND c.tipo IN :tipos
+    """)
+    List<Categoria> findCategoriasParaEmpresas(
+            @Param("tipos") List<CategoryType> tipos
+    );
 }

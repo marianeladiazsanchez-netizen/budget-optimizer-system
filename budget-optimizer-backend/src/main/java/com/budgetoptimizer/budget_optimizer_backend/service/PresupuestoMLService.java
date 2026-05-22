@@ -187,7 +187,7 @@ public class PresupuestoMLService {
         OptimizacionPresupuestoRequest request =
                 OptimizacionPresupuestoRequest.builder()
                         .montoTotal(
-                                presupuesto.getMontoTotal().doubleValue()
+                                BigDecimal monto = BigDecimal.valueOf(dto.getmontoTotal());
                         )
                         .categorias(categorias)
                         .prioridades(Collections.emptyMap())

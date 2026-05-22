@@ -5,7 +5,6 @@ import com.budgetoptimizer.budget_optimizer_backend.dto.ml.*;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -49,18 +48,12 @@ public class MLServiceClient {
                 .retrieve()
 
                 .onStatus(
-                        httpStatus::isError,
-                        response -> response.bodyToMono(String.class)
-                                .flatMap(errorBody -> {
-
-                                    log.error("Error ML Service: {}", errorBody);
-
-                                    return Mono.error(
-                                            new RuntimeException(
-                                                    "Error del servicio ML: " + errorBody
-                                                )
-                                        );
-                                })
+                HttpStatusCode::isError,
+                response -> response.bodyToMono(String.class)
+                .flatMap(errorBody -> {
+                    log.error("Error ML Service: {}", errorBody);
+                    return Mono.error(new RuntimeException(errorBody));
+                })
                 )
 
                 .bodyToMono(AnalisisPresupuestoResponse.class)

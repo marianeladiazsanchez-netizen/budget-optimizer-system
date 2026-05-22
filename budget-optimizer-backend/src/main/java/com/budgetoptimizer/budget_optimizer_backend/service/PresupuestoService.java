@@ -72,9 +72,8 @@ public class PresupuestoService {
 
 public PresupuestoResponseDTO buscarPresupuestoActual(Long usuarioId) {
     return convertirAResponse(
-            presupuestoRepo.findFirstByUsuarioIdAndStatusOrderByFechaCreacionDesc(
-                    usuarioId, BudgetStatus.ACTIVE
-            ).orElseThrow(() -> new RuntimeException("No hay presupuesto activo"))
+            presupuestoRepo.findFirstByUsuarioIdAndStatusOrderByFechaCreacionDesc(usuarioId, status)
+            .orElseThrow(() -> new RuntimeException("No hay presupuesto activo"))
         );
 }
 

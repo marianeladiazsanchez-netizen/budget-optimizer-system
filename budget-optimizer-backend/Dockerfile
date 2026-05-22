@@ -23,7 +23,7 @@ FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
 
 # Copiar el JAR desde la etapa de construcción
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=build /app/target/budget-optimizer-backend-0.0.1-SNAPSHOT.jar app.jar
 
 # Puerto expuesto
 EXPOSE 8080

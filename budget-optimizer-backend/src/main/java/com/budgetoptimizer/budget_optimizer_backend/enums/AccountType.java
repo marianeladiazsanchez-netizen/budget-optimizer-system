@@ -1,6 +1,7 @@
 package com.budgetoptimizer.budget_optimizer_backend.enums;
 
 import lombok.Getter;
+import java.math.BigDecimal;
 
 /**
  * Enum unificado para tipos de cuenta/roles de usuario
@@ -14,7 +15,7 @@ public enum AccountType {
     USER(
         "Usuario Básico",
         "Usuario estándar con acceso básico",
-        0.0,                    // Sin descuento
+        BigDecimal.valueOf(10), // Sin descuento
         100,                    // 100 transacciones/mes
         1,                      // Nivel de acceso básico
         false,                  // No tiene beneficios premium
@@ -61,7 +62,7 @@ public enum AccountType {
     
     private final String displayName;
     private final String descripcion;
-    private final Double descuentoPorcentaje;
+    private final BigDecimal descuentoPorcentaje;
     private final Integer limiteTransaccionesMes;
     private final Integer nivelAcceso;
     private final Boolean tieneBeneficios;

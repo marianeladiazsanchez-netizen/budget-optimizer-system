@@ -110,7 +110,7 @@ public class PresupuestoMLService {
         List<GastoHistorico> gastosHistoricos = gastos.stream()
         .map(gasto -> GastoHistorico.builder()
                 .categoria(gasto.getCategoria().getNombre())
-                .monto(gasto.getMonto().doubleValue())
+                .monto(gasto.getMonto())
                 .mes(gasto.getFechaGasto().format(formatter))
                 .fecha(gasto.getFechaGasto().toString())
                 .build())
@@ -186,9 +186,7 @@ public class PresupuestoMLService {
 
         OptimizacionPresupuestoRequest request =
                 OptimizacionPresupuestoRequest.builder()
-                        .montoTotal(
-                                BigDecimal monto = BigDecimal.valueOf(dto.getmontoTotal());
-                        )
+                        .montoTotal(presupuesto.getMontoTotal())
                         .categorias(categorias)
                         .prioridades(Collections.emptyMap())
                         .gastosActuales(Collections.emptyMap())
@@ -257,7 +255,7 @@ public class PresupuestoMLService {
         List<GastoHistorico> gastosHistoricos = gastos.stream()
                 .map(gasto -> GastoHistorico.builder()
                         .categoria(gasto.getCategoria().getNombre())
-                        .monto(gasto.getMonto().doubleValue())
+                        .monto(gasto.getMonto())
                         .mes(gasto.getFechaGasto().toString())
                         .fecha(gasto.getFechaGasto().toString())
                         .build())
@@ -370,10 +368,10 @@ public class PresupuestoMLService {
                 usuario.getPais(),
                 presupuesto.getNombre(),
                 presupuesto.getPeriodo(),
-                presupuesto.getMontoTotal(),
-                totalGastado,
-                porcentajeUsado,
-                presupuesto.getMontoTotal().subtract(totalGastado),
+                presupuesto.getMontoTotal().doubleValue(),
+                totalGastado.doubleValue(),
+                porcentajeUsado.doubleValue(),
+                presupuesto.getMontoTotal().subtract(totalGastado).doubleValue(),
                 gastos.size(),
                 obtenerCategoriasTop(gastos)
         );
@@ -401,7 +399,7 @@ public class PresupuestoMLService {
                         String.format(
                                 "%s ($%.2f)",
                                 e.getKey(),
-                                e.getValue()
+                                e.getValue().doubleValue()
                         )
                 )
                 .collect(Collectors.joining(", "));

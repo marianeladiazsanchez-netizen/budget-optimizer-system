@@ -390,7 +390,7 @@ public class UsuarioService {
 
                 // Beneficios
                 .descuentoPorcentaje(
-                        accountType.getDescuentoPorcentaje()
+                        BigDecimal.valueOf(accountType.getDescuentoPorcentaje())
                 )
 
                 .tieneBeneficios(

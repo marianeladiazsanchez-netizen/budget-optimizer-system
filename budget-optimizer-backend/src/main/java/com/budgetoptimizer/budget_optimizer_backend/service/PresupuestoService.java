@@ -72,7 +72,7 @@ public class PresupuestoService {
 
 public PresupuestoResponseDTO buscarPresupuestoActual(Long usuarioId) {
     return convertirAResponse(
-            presupuestoRepo.findFirstByUsuarioIdAndStatusOrderByFechaCreacionDesc(usuarioId, status)
+            presupuestoRepo.findFirstByUsuarioIdAndStatusOrderByFechaCreacionDesc(usuarioId, BudgetStatus.ACTIVE)
             .orElseThrow(() -> new RuntimeException("No hay presupuesto activo"))
         );
 }
@@ -201,9 +201,11 @@ public void eliminarPresupuesto(Long id) {
 
         BigDecimal restante = total.subtract(gastado);
 
-        double porcentaje = gastado.divide(total, 4, RoundingMode.HALF_UP)
-        .multiply(BigDecimal.valueOf(100))
-        .doubleValue();
+        double porcentaje = total.compareTo(BigDecimal.ZERO) > 0
+        ? gastado.divide(total, 4, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(100))
+                .doubleValue()
+        : 0.0;
 
         return PresupuestoResponseDTO.builder()
                 .id(p.getId())

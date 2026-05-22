@@ -55,10 +55,6 @@ services:
       JWT_EXPIRATION: ${JWT_EXPIRATION}
     ports:
       - "${BACKEND_PORT}:8080"
-    volumes:
-      - ./budget-optimizer-backend:/app
-      -  ~/.m2:/root/.m2    
-    command: mvn spring-boot:run
     depends_on:
       postgres:
         condition: service_healthy

@@ -29,7 +29,7 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
 
     List<Expense> findByUsuarioIdAndCategoriaId(Long usuarioId, Long categoriaId);
 
-    List<Expense> findByUsuarioIdAndEmpresaId(Long usuarioId, Long empresaId);
+    List<Expense> findByUsuario_IdAndEmpresa_Id(String usuarioId, String empresaId);
 
     List<Expense> findByUsuarioIdAndMetodoPago(Long usuarioId, PaymentMethod metodoPago);
 

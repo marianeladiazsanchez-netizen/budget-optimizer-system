@@ -188,7 +188,7 @@ public class PresupuestoMLService {
                 OptimizacionPresupuestoRequest.builder()
                         .montoTotal(presupuesto.getMontoTotal())
                         .categorias(categorias)
-                        .prioridades(Collections.emptyMap())
+                        .prioridades(Collections.emptyList())
                         .gastosActuales(Collections.emptyMap())
                         .build();
 

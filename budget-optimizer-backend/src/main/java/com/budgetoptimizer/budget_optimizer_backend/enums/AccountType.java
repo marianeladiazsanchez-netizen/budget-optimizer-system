@@ -2,6 +2,7 @@ package com.budgetoptimizer.budget_optimizer_backend.enums;
 
 import lombok.Getter;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 /**
  * Enum unificado para tipos de cuenta/roles de usuario
@@ -15,7 +16,7 @@ public enum AccountType {
     USER(
         "Usuario Básico",
         "Usuario estándar con acceso básico",
-        BigDecimal.valueOf(10), // Sin descuento
+        BigDecimal.valueOf(0), // Sin descuento
         100,                    // 100 transacciones/mes
         1,                      // Nivel de acceso básico
         false,                  // No tiene beneficios premium
@@ -26,7 +27,7 @@ public enum AccountType {
     PREMIUM(
         "Usuario Premium",
         "Usuario premium con funciones avanzadas y descuentos",
-        10.0,                   // 10% descuento
+        BigDecimal.valueOf(10),                   // 10% descuento
         1000,                   // 1000 transacciones/mes
         2,                      // Nivel de acceso medio
         true,                   // Tiene beneficios premium
@@ -37,7 +38,7 @@ public enum AccountType {
     BUSINESS(
         "Empresa/Vendedor",
         "Usuario tipo empresa que puede administrar su negocio",
-        5.0,                    // 5% descuento
+        BigDecimal.valueOf(5),                    // 5% descuento
         500,                    // 500 transacciones/mes
         2,                      // Nivel de acceso medio
         true,                   // Tiene algunos beneficios
@@ -48,7 +49,7 @@ public enum AccountType {
     ADMIN(
         "Administrador",
         "Administrador del sistema con acceso completo",
-        15.0,                   // 15% descuento (máximo)
+        BigDecimal.valueOf(15),                   // 15% descuento (máximo)
         999999,                 // Sin límite práctico
         3,                      // Nivel de acceso máximo
         true,                   // Todos los beneficios
@@ -70,7 +71,7 @@ public enum AccountType {
     private final String descripcionDetallada;
     
     // Constructor
-    AccountType(String displayName, String descripcion, Double descuentoPorcentaje,
+    AccountType(String displayName, String descripcion, BigDecimal descuentoPorcentaje,
                 Integer limiteTransaccionesMes, Integer nivelAcceso, 
                 Boolean tieneBeneficios, Boolean puedeAdministrarEmpresas,
                 String descripcionDetallada) {
@@ -123,28 +124,48 @@ public enum AccountType {
     /**
      * Calcula el monto con descuento aplicado según el tipo de cuenta
      */
-    public Double aplicarDescuento(Double montoOriginal) {
-        if (montoOriginal == null || montoOriginal <= 0) {
-            return montoOriginal;
-        }
-        return montoOriginal * (1 - descuentoPorcentaje / 100);
+    public Double aplicarDescuento(BigDecimal montoOriginal) {
+        if (montoOriginal == null ||
+        montoOriginal.compareTo(BigDecimal.ZERO) <= 0) {
+        return montoOriginal;
+    }
+
+    BigDecimal porcentajeDescuento =
+            descuentoPorcentaje.divide(
+                    BigDecimal.valueOf(100),
+                    2,
+                    RoundingMode.HALF_UP
+            );
+
+    BigDecimal multiplicador =
+            BigDecimal.ONE.subtract(porcentajeDescuento);
+
+    return montoOriginal.multiply(multiplicador);
     }
     
     /**
      * Calcula el ahorro obtenido con el descuento
      */
-    public Double calcularAhorro(Double montoOriginal) {
-        if (montoOriginal == null || montoOriginal <= 0) {
-            return 0.0;
-        }
-        return montoOriginal * (descuentoPorcentaje / 100);
+    public BigDecimal calcularAhorro(BigDecimal montoOriginal) {
+         if (montoOriginal == null ||
+        montoOriginal.compareTo(BigDecimal.ZERO) <= 0) {
+        return BigDecimal.ZERO;
+    }
+
+    return montoOriginal.multiply(
+            descuentoPorcentaje.divide(
+                    BigDecimal.valueOf(100),
+                    2,
+                    RoundingMode.HALF_UP
+                )
+        ); 
     }
     
     /**
      * Calcula el monto final después de aplicar descuento
      * (Alias más semántico de aplicarDescuento)
      */
-    public Double calcularMontoFinal(Double montoOriginal) {
+    public BigDecimal calcularMontoFinal(BigDecimal montoOriginal) {
         return aplicarDescuento(montoOriginal);
     }
     
@@ -215,16 +236,23 @@ public enum AccountType {
     /**
      * Calcula el beneficio de upgrade (diferencia de descuento)
      */
-    public Double calcularBeneficioUpgrade(Double gastoMensualPromedio) {
-        if (!puedeHacerUpgrade() || gastoMensualPromedio == null || gastoMensualPromedio <= 0) {
-            return 0.0;
-        }
-        
-        AccountType siguienteNivel = obtenerSiguienteNivel();
-        Double ahorroActual = this.calcularAhorro(gastoMensualPromedio);
-        Double ahorroSiguiente = siguienteNivel.calcularAhorro(gastoMensualPromedio);
-        
-        return ahorroSiguiente - ahorroActual;
+    public BigDecimal calcularBeneficioUpgrade(BigDecimal gastoMensualPromedio) {
+         if (!puedeHacerUpgrade()
+            || gastoMensualPromedio == null
+            || gastoMensualPromedio.compareTo(BigDecimal.ZERO) <= 0) {
+
+        return BigDecimal.ZERO;
+    }
+
+    AccountType siguienteNivel = obtenerSiguienteNivel();
+
+    BigDecimal ahorroActual =
+            this.calcularAhorro(gastoMensualPromedio);
+
+    BigDecimal ahorroSiguiente =
+            siguienteNivel.calcularAhorro(gastoMensualPromedio);
+
+    return ahorroSiguiente.subtract(ahorroActual);
     }
     
     // ============================================
@@ -300,21 +328,21 @@ public enum AccountType {
     /**
      * Obtiene el tipo de cuenta recomendado según gasto mensual
      */
-    public static AccountType recomendarSegunGasto(Double gastoMensual) {
-        if (gastoMensual == null || gastoMensual <= 0) {
+    public static AccountType recomendarSegunGasto(BigDecimal gastoMensual) {
+        if (gastoMensual.compareTo(BigDecimal.valueOf(0)) < 0) {
             return USER;
         }
         
         // Si gasta menos de $500, cuenta básica
-        if (gastoMensual < 500) {
+        if (gastoMensual.compareTo(BigDecimal.valueOf(500)) < 0) {
             return USER;
         }
         
         // Si gasta entre $500-2000, calcular si premium vale la pena
-        if (gastoMensual <= 2000) {
+        if (if (gastoMensual.compareTo(BigDecimal.valueOf(2000)) <= 0)) {
             // Premium ahorra 10%, si ahorra más de $10/mes vale la pena
-            Double ahorroPremium = PREMIUM.calcularAhorro(gastoMensual);
-            return ahorroPremium > 10 ? PREMIUM : USER;
+            BigDecimal ahorroPremium = PREMIUM.calcularAhorro(gastoMensual);
+            return ahorroPremium.compareTo(BigDecimal.valueOf(10)) > 0? PREMIUM: USER;
         }
         
         // Si gasta más de $2000, definitivamente premium

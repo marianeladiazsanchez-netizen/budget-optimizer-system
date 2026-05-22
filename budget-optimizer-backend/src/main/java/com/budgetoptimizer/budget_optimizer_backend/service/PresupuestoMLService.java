@@ -78,7 +78,7 @@ public class PresupuestoMLService {
             throw new RuntimeException(
                     "Error al analizar presupuesto con IA",
                     e
-            );
+                );
         }
     }
 
@@ -110,7 +110,7 @@ public class PresupuestoMLService {
         List<GastoHistorico> gastosHistoricos = gastos.stream()
                 .map(gasto -> GastoHistorico.builder()
                         .categoria(gasto.getCategoria().getNombre())
-                        .monto(gasto.getMonto().doubleValue())
+                        .monto(monto: gasto.getMonto())
                         .mes(gasto.getFechaGasto().format(formatter))
                         .fecha(gasto.getFechaGasto().toString())
                         .build())
@@ -258,7 +258,7 @@ public class PresupuestoMLService {
                 .map(gasto -> GastoHistorico.builder()
                         .categoria(gasto.getCategoria().getNombre())
                         .monto(gasto.getMonto().doubleValue())
-                        .mes(gasto.getFechaGasto().format(formatter))
+                        .mes(gasto.getFechaGasto().toString())
                         .fecha(gasto.getFechaGasto().toString())
                         .build())
                 .collect(Collectors.toList());

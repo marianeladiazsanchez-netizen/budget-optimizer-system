@@ -51,7 +51,7 @@ public class CategoryLimit {
     private BigDecimal limiteAsignado;
     
     @Column(nullable = false)
-    private BigDecimal gastoActual = BigDecimal.ZERO;
+    private BigDecimal gastoActual;
     
     @CreationTimestamp
     private LocalDateTime fechaCreacion;

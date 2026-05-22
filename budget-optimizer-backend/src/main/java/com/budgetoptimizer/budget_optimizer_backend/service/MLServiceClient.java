@@ -48,7 +48,7 @@ public class MLServiceClient {
                 .retrieve()
 
                 .onStatus(
-                        status.isError(),
+                        httpStatus::isError,
                         response -> response.bodyToMono(String.class)
                                 .flatMap(errorBody -> {
 
@@ -57,8 +57,8 @@ public class MLServiceClient {
                                     return Mono.error(
                                             new RuntimeException(
                                                     "Error del servicio ML: " + errorBody
-                                            )
-                                    );
+                                                )
+                                        );
                                 })
                 )
 

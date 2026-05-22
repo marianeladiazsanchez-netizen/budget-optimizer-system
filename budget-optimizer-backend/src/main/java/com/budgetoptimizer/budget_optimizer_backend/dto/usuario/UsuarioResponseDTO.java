@@ -25,8 +25,8 @@ public class UsuarioResponseDTO {
     private String telefono;
     
     // Ubicación
-    private BigDecimal latitud;
-    private BigDecimal longitud;
+    private double latitud;
+    private double longitud;
     private String ciudad;
     private String pais;
     

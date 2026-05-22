@@ -124,7 +124,7 @@ public enum AccountType {
     /**
      * Calcula el monto con descuento aplicado según el tipo de cuenta
      */
-    public Double aplicarDescuento(BigDecimal montoOriginal) {
+    public BigDecimal aplicarDescuento(BigDecimal montoOriginal) {
         if (montoOriginal == null ||
         montoOriginal.compareTo(BigDecimal.ZERO) <= 0) {
         return montoOriginal;
@@ -132,15 +132,10 @@ public enum AccountType {
 
     BigDecimal porcentajeDescuento =
             descuentoPorcentaje.divide(
-                    BigDecimal.valueOf(100),
-                    2,
-                    RoundingMode.HALF_UP
+                    BigDecimal.valueOf(100)
             );
 
-    BigDecimal multiplicador =
-            BigDecimal.ONE.subtract(porcentajeDescuento);
-
-    return montoOriginal.multiply(multiplicador);
+          return montoOriginal.multiply(BigDecimal.ONE.subtract(porcentaje));  
     }
     
     /**
@@ -152,13 +147,7 @@ public enum AccountType {
         return BigDecimal.ZERO;
     }
 
-    return montoOriginal.multiply(
-            descuentoPorcentaje.divide(
-                    BigDecimal.valueOf(100),
-                    2,
-                    RoundingMode.HALF_UP
-                )
-        ); 
+    return montoOriginal.multiply(descuentoPorcentaje.divide(BigDecimal.valueOf(100))); 
     }
     
     /**
@@ -329,7 +318,7 @@ public enum AccountType {
      * Obtiene el tipo de cuenta recomendado según gasto mensual
      */
     public static AccountType recomendarSegunGasto(BigDecimal gastoMensual) {
-        if (gastoMensual.compareTo(BigDecimal.valueOf(0)) < 0) {
+        if (gastoMensual.compareTo(BigDecimal.valueOf(BigDecimal.ZERO)) <= 0) {
             return USER;
         }
         
@@ -339,7 +328,7 @@ public enum AccountType {
         }
         
         // Si gasta entre $500-2000, calcular si premium vale la pena
-        if (if (gastoMensual.compareTo(BigDecimal.valueOf(2000)) <= 0)) {
+        if (gastoMensual.compareTo(BigDecimal.valueOf(2000)) <= 0) {
             // Premium ahorra 10%, si ahorra más de $10/mes vale la pena
             BigDecimal ahorroPremium = PREMIUM.calcularAhorro(gastoMensual);
             return ahorroPremium.compareTo(BigDecimal.valueOf(10)) > 0? PREMIUM: USER;

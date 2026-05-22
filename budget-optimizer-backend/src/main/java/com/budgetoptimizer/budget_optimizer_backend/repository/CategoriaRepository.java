@@ -25,7 +25,7 @@ public interface CategoriaRepository extends JpaRepository<Categoria, Long> {
     List<Categoria> findByNombreContainingIgnoreCase(String texto);
 
     // ==========================================
-    // FILTROS POR ESTADO
+    // ESTADO
     // ==========================================
 
     List<Categoria> findByActivaTrue();
@@ -33,57 +33,38 @@ public interface CategoriaRepository extends JpaRepository<Categoria, Long> {
     List<Categoria> findByActivaFalse();
 
     // ==========================================
-    // FILTROS POR TIPO
+    // TIPO
     // ==========================================
 
     List<Categoria> findByTipo(CategoryType tipo);
 
     List<Categoria> findByActivaTrueAndTipo(CategoryType tipo);
 
-    /**
-     * Categorías activas por múltiples tipos
-     */
     List<Categoria> findByActivaTrueAndTipoIn(List<CategoryType> tipos);
 
     // ==========================================
-    // FILTROS POR TIPO DE EMPRESA
+    // GASTOS (FIX DEFINITIVO)
     // ==========================================
 
-    List<Categoria> findByTipoEmpresaAsociada(TipoEmpresa tipoEmpresa);
-
-    List<Categoria> findByTipoEmpresaAsociadaIsNull();
-
-    List<Categoria> findByTipoEmpresaAsociadaIsNullAndActivaTrue();
-
-    // ==========================================
-    // CONSULTAS PERSONALIZADAS
-    // ==========================================
-
-    /**
-     * Categorías válidas para gastos
-     * (EXPENSE o BOTH)
-     */
     @Query("""
         SELECT c
         FROM Categoria c
         WHERE c.activa = true
-        AND c.tipo IN :tipos
+        AND (c.tipo = com.budgetoptimizer.budget_optimizer_backend.enums.CategoryType.EXPENSE
+             OR c.tipo = com.budgetoptimizer.budget_optimizer_backend.enums.CategoryType.BOTH)
     """)
-    List<Categoria> findCategoriasParaGastos(
-            @Param("tipos") List<CategoryType> tipos
-    );
+    List<Categoria> findCategoriasParaGastos();
 
-    /**
-     * Categorías válidas para empresas
-     * (BUSINESS o BOTH)
-     */
+    // ==========================================
+    // EMPRESAS (FIX DEFINITIVO)
+    // ==========================================
+
     @Query("""
         SELECT c
         FROM Categoria c
         WHERE c.activa = true
-        AND c.tipo IN :tipos
+        AND (c.tipo = com.budgetoptimizer.budget_optimizer_backend.enums.CategoryType.BUSINESS
+             OR c.tipo = com.budgetoptimizer.budget_optimizer_backend.enums.CategoryType.BOTH)
     """)
-    List<Categoria> findCategoriasParaEmpresas(
-            @Param("tipos") List<CategoryType> tipos
-    );
+    List<Categoria> findCategoriasParaEmpresas();
 }

@@ -31,10 +31,7 @@ public class PresupuestoService {
     // ==========================================
     // CREACIÓN
     // ==========================================
-    public PresupuestoResponseDTO crearPresupuesto(
-            Long usuarioId,
-            CrearPresupuestoDTO dto
-    ) {
+    public PresupuestoResponseDTO crearPresupuesto(Long usuarioId, CrearPresupuestoDTO dto) {
 
         Usuario usuario = usuarioRepo.findById(usuarioId)
                 .orElseThrow(() -> new UsuarioNoEncontradoException(usuarioId));
@@ -55,7 +52,7 @@ public class PresupuestoService {
 
         presupuesto = presupuestoRepo.save(presupuesto);
 
-        if (dto.getLimitesCategorias() != null && !dto.getLimitesCategorias().isEmpty()) {
+        if (dto.getLimitesCategorias() != null) {
             crearLimitesCategorias(presupuesto, dto.getLimitesCategorias());
         }
 
@@ -63,39 +60,57 @@ public class PresupuestoService {
     }
 
     // ==========================================
-    // LIMITES CATEGORÍAS
+    // MÉTODOS FALTANTES (DEL CONTROLLER)
     // ==========================================
-    private void crearLimitesCategorias(
-            Presupuesto presupuesto,
-            Map<Long, BigDecimal> limites
-    ) {
 
-        BigDecimal sumaLimites = BigDecimal.ZERO;
-
-        for (var entry : limites.entrySet()) {
-
-            Categoria categoria = categoriaRepo.findById(entry.getKey())
-                    .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
-
-            BigDecimal monto = entry.getValue();
-
-            CategoryLimit limit = new CategoryLimit();
-            limit.setPresupuesto(presupuesto);
-            limit.setCategoria(categoria);
-
-            // ⚠️ mantener coherencia con double si tu entity aún lo usa
-            limit.setLimiteAsignado(monto.doubleValue());
-            limit.setGastoActual(0.0);
-
-            categoryLimitRepo.save(limit);
-
-            sumaLimites = sumaLimites.add(monto);
+    public List<PresupuestoResponseDTO> listarPorUsuarioYEstado(Long usuarioId, BudgetStatus status) {
+    return presupuestoRepo.findByUsuarioIdAndStatus(usuarioId, status)
+            .stream()
+            .map(this::convertirAResponse)
+            .toList();
         }
 
-        if (sumaLimites.compareTo(presupuesto.getMontoTotal()) > 0) {
-            throw new IllegalArgumentException("Límites exceden presupuesto");
-        }
-    }
+public PresupuestoResponseDTO buscarPresupuestoActual(Long usuarioId) {
+    return convertirAResponse(
+            presupuestoRepo.findFirstByUsuarioIdAndStatusOrderByFechaCreacionDesc(
+                    usuarioId, BudgetStatus.ACTIVE
+            ).orElseThrow(() -> new RuntimeException("No hay presupuesto activo"))
+        );
+}
+
+public PresupuestoResponseDTO actualizarPresupuesto(Long id, ActualizarPresupuestoDTO dto) {
+    Presupuesto p = presupuestoRepo.findById(id)
+            .orElseThrow(() -> new RuntimeException("No encontrado"));
+
+    p.setNombre(dto.getNombre());
+    p.setMontoTotal(dto.getMontoTotal());
+    p.setFechaInicio(dto.getFechaInicio());
+    p.setFechaFin(dto.getFechaFin());
+
+    return convertirAResponse(presupuestoRepo.save(p));
+}
+
+public PresupuestoResponseDTO activarPresupuesto(Long id) {
+    Presupuesto p = presupuestoRepo.findById(id).orElseThrow();
+    p.setStatus(BudgetStatus.ACTIVE);
+    return convertirAResponse(presupuestoRepo.save(p));
+}
+
+public PresupuestoResponseDTO pausarPresupuesto(Long id) {
+    Presupuesto p = presupuestoRepo.findById(id).orElseThrow();
+    p.setStatus(BudgetStatus.PAUSED);
+    return convertirAResponse(presupuestoRepo.save(p));
+}
+
+public PresupuestoResponseDTO completarPresupuesto(Long id) {
+    Presupuesto p = presupuestoRepo.findById(id).orElseThrow();
+    p.setStatus(BudgetStatus.COMPLETED);
+    return convertirAResponse(presupuestoRepo.save(p));
+}
+
+public void eliminarPresupuesto(Long id) {
+    presupuestoRepo.deleteById(id);
+}
 
     // ==========================================
     // CONSULTAS
@@ -121,115 +136,97 @@ public class PresupuestoService {
 
         List<Presupuesto> presupuestos = presupuestoRepo.findByUsuarioId(usuarioId);
 
-        if (presupuestos.isEmpty()) {
-            return EstadisticasPresupuestoDTO.builder()
-                    .totalPresupuestos(0)
-                    .mensaje("Sin datos")
-                    .build();
-        }
-
-        BigDecimal totalPresupuestado = presupuestos.stream()
+        BigDecimal total = presupuestos.stream()
                 .map(Presupuesto::getMontoTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal totalGastado = presupuestos.stream()
+        BigDecimal gastado = presupuestos.stream()
                 .map(this::calcularGastoTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal totalRestante = totalPresupuestado.subtract(totalGastado);
+        BigDecimal restante = total.subtract(gastado);
 
-        Double porcentaje = totalPresupuestado.compareTo(BigDecimal.ZERO) > 0
-                ? totalGastado
-                .divide(totalPresupuestado, 4, RoundingMode.HALF_UP)
+        double porcentaje = total.compareTo(BigDecimal.ZERO) > 0
+                ? gastado.divide(total, 4, RoundingMode.HALF_UP)
                 .multiply(BigDecimal.valueOf(100))
                 .doubleValue()
                 : 0.0;
 
         return EstadisticasPresupuestoDTO.builder()
                 .totalPresupuestos(presupuestos.size())
-                .totalPresupuestado(totalPresupuestado)
-                .totalGastado(totalGastado)
-                .totalRestante(totalRestante)
+                .totalPresupuestado(total)
+                .totalGastado(gastado)
+                .totalRestante(restante)
                 .porcentajeGastoGeneral(porcentaje)
                 .build();
     }
 
     // ==========================================
-    // MAPPER
+    // HELPERS
     // ==========================================
-    private PresupuestoResponseDTO convertirAResponse(Presupuesto presupuesto) {
+    private void crearLimitesCategorias(
+        Presupuesto presupuesto,
+        Map<Long, BigDecimal> limites
+) {
 
-        BigDecimal gastoTotal = calcularGastoTotal(presupuesto);
-        BigDecimal total = presupuesto.getMontoTotal() != null
-                ? presupuesto.getMontoTotal()
-                : BigDecimal.ZERO;
+    BigDecimal sumaLimites = BigDecimal.ZERO;
 
-        BigDecimal restante = total.subtract(gastoTotal);
+    for (var entry : limites.entrySet()) {
 
-        Double porcentaje = total.compareTo(BigDecimal.ZERO) > 0
-                ? gastoTotal
-                .divide(total, 4, RoundingMode.HALF_UP)
+        Categoria categoria = categoriaRepo.findById(entry.getKey())
+                .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
+
+        BigDecimal monto = entry.getValue();
+
+        CategoryLimit limit = new CategoryLimit();
+        limit.setPresupuesto(presupuesto);
+        limit.setCategoria(categoria);
+
+        limit.setLimiteAsignado(monto);   
+        limit.setGastoActual(BigDecimal.ZERO);
+
+        categoryLimitRepo.save(limit);
+
+        sumaLimites = sumaLimites.add(monto);
+    }
+
+    if (sumaLimites.compareTo(presupuesto.getMontoTotal()) > 0) {
+        throw new IllegalArgumentException("Límites exceden presupuesto");
+    }
+}
+
+    private PresupuestoResponseDTO convertirAResponse(Presupuesto p) {
+
+        BigDecimal gastado = calcularGastoTotal(p);
+        BigDecimal total = p.getMontoTotal() != null ? p.getMontoTotal() : BigDecimal.ZERO;
+
+        BigDecimal restante = total.subtract(gastado);
+
+        double porcentaje = total.compareTo(BigDecimal.ZERO) > 0
+                ? gastado.divide(total, 4, RoundingMode.HALF_UP)
                 .multiply(BigDecimal.valueOf(100))
                 .doubleValue()
                 : 0.0;
-
-        List<PresupuestoResponseDTO.LimiteCategoriaDTO> limites =
-                presupuesto.getLimitesCategorias() == null
-                        ? List.of()
-                        : presupuesto.getLimitesCategorias()
-                        .stream()
-                        .map(this::convertirLimiteADTO)
-                        .toList();
 
         return PresupuestoResponseDTO.builder()
-                .id(presupuesto.getId())
-                .usuarioId(presupuesto.getUsuario().getId())
-                .nombre(presupuesto.getNombre())
+                .id(p.getId())
+                .usuarioId(p.getUsuario().getId())
+                .nombre(p.getNombre())
                 .montoTotal(total)
-                .montoGastado(gastoTotal)
+                .montoGastado(gastado)
                 .montoRestante(restante)
                 .porcentajeGastado(porcentaje)
-                .status(presupuesto.getStatus())
-                .fechaInicio(presupuesto.getFechaInicio())
-                .fechaFin(presupuesto.getFechaFin())
-                .totalGastos(presupuesto.getExpenses() != null ? presupuesto.getExpenses().size() : 0)
-                .limitesCategorias(limites)
+                .status(p.getStatus())
+                .fechaInicio(p.getFechaInicio())
+                .fechaFin(p.getFechaFin())
+                .totalGastos(p.getExpenses() != null ? p.getExpenses().size() : 0)
                 .build();
     }
 
-    // ==========================================
-    // LIMITE DTO
-    // ==========================================
-    private PresupuestoResponseDTO.LimiteCategoriaDTO convertirLimiteADTO(CategoryLimit limite) {
+    private BigDecimal calcularGastoTotal(Presupuesto p) {
+        if (p.getExpenses() == null) return BigDecimal.ZERO;
 
-        BigDecimal asignado = BigDecimal.valueOf(limite.getLimiteAsignado());
-        BigDecimal gastado = BigDecimal.valueOf(limite.getGastoActual());
-
-        BigDecimal restante = asignado.subtract(gastado);
-
-        Double porcentaje = limite.getLimiteAsignado() > 0
-                ? gastado.divide(asignado, 4, RoundingMode.HALF_UP)
-                .multiply(BigDecimal.valueOf(100))
-                .doubleValue()
-                : 0.0;
-
-        return PresupuestoResponseDTO.LimiteCategoriaDTO.builder()
-                .categoriaId(limite.getCategoria().getId())
-                .categoriaNombre(limite.getCategoria().getNombre())
-                .limiteAsignado(asignado)
-                .gastoActual(gastado)
-                .restante(restante)
-                .porcentajeUtilizado(porcentaje)
-                .build();
-    }
-
-    // ==========================================
-    // AUX
-    // ==========================================
-    private BigDecimal calcularGastoTotal(Presupuesto presupuesto) {
-        if (presupuesto.getExpenses() == null) return BigDecimal.ZERO;
-
-        return presupuesto.getExpenses()
+        return p.getExpenses()
                 .stream()
                 .map(Expense::getMonto)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);

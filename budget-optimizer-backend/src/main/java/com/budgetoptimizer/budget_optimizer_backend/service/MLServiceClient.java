@@ -48,7 +48,7 @@ public class MLServiceClient {
                 .retrieve()
 
                 .onStatus(
-                        HttpStatus::isError,
+                        status.isError(),
                         response -> response.bodyToMono(String.class)
                                 .flatMap(errorBody -> {
 

@@ -8,25 +8,33 @@ import lombok.Getter;
 @Getter
 public enum CategoryType {
     
+    INCOME(
+        "Ingreso",
+        "Categoría para ingresos del usuario",
+        "💰",
+        true,
+        false
+    ),
+
     EXPENSE(
         "Gasto",
-        "Categoría solo para clasificar gastos del usuario",
+        "Categoría para gastos del usuario",
         "📝",
         true,
         false
     ),
-    
+
     BUSINESS(
         "Empresa",
-        "Categoría solo para clasificar empresas/negocios",
+        "Categoría para empresas",
         "🏢",
         false,
         true
     ),
-    
+
     BOTH(
         "Ambos",
-        "Categoría que sirve tanto para gastos como empresas",
+        "Categoría versátil",
         "🔄",
         true,
         true

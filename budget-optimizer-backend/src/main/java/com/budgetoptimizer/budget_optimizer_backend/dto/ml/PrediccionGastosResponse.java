@@ -1,6 +1,7 @@
 package com.budgetoptimizer.budget_optimizer_backend.dto.ml;
 
 import java.util.List;
+import java.math.BigDecimal;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

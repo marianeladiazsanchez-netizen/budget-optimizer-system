@@ -15,20 +15,34 @@ import java.util.List;
 public interface ExpenseRepository extends JpaRepository<Expense, Long> {
 
     // ==========================================
-    // CONSULTAS POR USUARIO
+    // USUARIO
     // ==========================================
-
     List<Expense> findByUsuarioId(Long usuarioId);
 
     List<Expense> findByUsuarioIdOrderByFechaGastoDesc(Long usuarioId);
 
-    // ==========================================
-    // CONSULTAS POR PRESUPUESTO
-    // ==========================================
+    List<Expense> findByUsuarioIdAndFechaGastoBetweenOrderByFechaGastoDesc(
+            Long usuarioId,
+            LocalDateTime inicio,
+            LocalDateTime fin
+    );
 
+    List<Expense> findByUsuarioIdAndCategoriaId(Long usuarioId, Long categoriaId);
+
+    List<Expense> findByUsuarioIdAndEmpresaId(Long usuarioId, Long empresaId);
+
+    List<Expense> findByUsuarioIdAndMetodoPago(Long usuarioId, PaymentMethod metodoPago);
+
+    List<Expense> findByUsuarioIdAndDescripcionContainingIgnoreCase(Long usuarioId, String keyword);
+
+    // ==========================================
+    // PRESUPUESTO
+    // ==========================================
     List<Expense> findByPresupuestoId(Long presupuestoId);
 
-    List<Expense> findByPresupuestoIdAndCategoriaId(
+    List<Expense> findByPresupuestoIdOrderByFechaGastoDesc(Long presupuestoId);
+
+    List<Expense> findByPresupuestoIdAndCategoriaIdOrderByFechaGastoDesc(
             Long presupuestoId,
             Long categoriaId
     );
@@ -40,108 +54,56 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
     );
 
     // ==========================================
-    // CONSULTAS POR CATEGORÍA
+    // CATEGORÍA
     // ==========================================
-
     List<Expense> findByCategoriaId(Long categoriaId);
 
-    List<Expense> findByUsuarioIdAndCategoriaId(
-            Long usuarioId,
-            Long categoriaId
-    );
+    // ==========================================
+    // EMPRESA (FIX: Long, no String)
+    // ==========================================
+    List<Expense> findByEmpresaId(Long empresaId);
 
     // ==========================================
-    // CONSULTAS POR EMPRESA
+    // MÉTODO DE PAGO
     // ==========================================
-
-    List<Expense> findByEmpresaId(String empresaId);
-
-    List<Expense> findByUsuarioIdAndEmpresaId(
-            Long usuarioId,
-            String empresaId
-    );
-
-    // ==========================================
-    // CONSULTAS POR MÉTODO DE PAGO
-    // ==========================================
-
     List<Expense> findByMetodoPago(PaymentMethod metodoPago);
 
-    List<Expense> findByUsuarioIdAndMetodoPago(
-            Long usuarioId,
-            PaymentMethod metodoPago
-    );
+    // ==========================================
+    // FECHAS
+    // ==========================================
+    List<Expense> findByFechaGastoBetween(LocalDateTime inicio, LocalDateTime fin);
 
     // ==========================================
-    // CONSULTAS POR FECHAS
+    // MONTO
     // ==========================================
-
-    List<Expense> findByFechaGastoBetween(
-            LocalDateTime inicio,
-            LocalDateTime fin
-    );
-
-    List<Expense> findByUsuarioIdAndFechaGastoBetween(
-            Long usuarioId,
-            LocalDateTime inicio,
-            LocalDateTime fin
-    );
-
-    // ==========================================
-    // CONSULTAS POR MONTO
-    // ==========================================
-
     List<Expense> findByMontoGreaterThan(BigDecimal monto);
 
-    List<Expense> findByMontoBetween(
-            BigDecimal min,
-            BigDecimal max
-    );
+    List<Expense> findByMontoBetween(BigDecimal min, BigDecimal max);
 
     List<Expense> findTop10ByUsuarioIdOrderByMontoDesc(Long usuarioId);
 
     // ==========================================
-    // CONSULTAS POR DESCRIPCIÓN
+    // DESCRIPCIÓN
     // ==========================================
-
     List<Expense> findByDescripcionContainingIgnoreCase(String keyword);
-
-    List<Expense> findByUsuarioIdAndDescripcionContainingIgnoreCase(
-            Long usuarioId,
-            String keyword
-    );
 
     // ==========================================
     // AGREGACIONES
     // ==========================================
-
-    /**
-     * Suma total de gastos de un presupuesto
-     */
     @Query("""
         SELECT COALESCE(SUM(e.monto), 0)
         FROM Expense e
         WHERE e.presupuesto.id = :presupuestoId
     """)
-    BigDecimal sumMontoByPresupuestoId(
-            @Param("presupuestoId") Long presupuestoId
-    );
+    BigDecimal sumMontoByPresupuestoId(@Param("presupuestoId") Long presupuestoId);
 
-    /**
-     * Suma total de gastos de una categoría
-     */
     @Query("""
         SELECT COALESCE(SUM(e.monto), 0)
         FROM Expense e
         WHERE e.categoria.id = :categoriaId
     """)
-    BigDecimal sumMontoByCategoriaId(
-            @Param("categoriaId") Long categoriaId
-    );
+    BigDecimal sumMontoByCategoriaId(@Param("categoriaId") Long categoriaId);
 
-    /**
-     * Gastos agrupados por categoría
-     */
     @Query("""
         SELECT e.categoria.nombre, SUM(e.monto)
         FROM Expense e
@@ -149,20 +111,13 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
         GROUP BY e.categoria.nombre
         ORDER BY SUM(e.monto) DESC
     """)
-    List<Object[]> findGastosPorCategoria(
-            @Param("usuarioId") Long usuarioId
-    );
+    List<Object[]> findGastosPorCategoria(@Param("usuarioId") Long usuarioId);
 
-    /**
-     * Promedio de gasto por categoría
-     */
     @Query("""
         SELECT e.categoria.nombre, AVG(e.monto)
         FROM Expense e
         WHERE e.usuario.id = :usuarioId
         GROUP BY e.categoria.nombre
     """)
-    List<Object[]> findPromedioGastoPorCategoria(
-            @Param("usuarioId") Long usuarioId
-    );
+    List<Object[]> findPromedioGastoPorCategoria(@Param("usuarioId") Long usuarioId);
 }

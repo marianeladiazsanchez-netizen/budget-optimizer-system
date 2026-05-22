@@ -5,6 +5,7 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
+import jakarta.persistence.FetchType;
 
 import org.hibernate.annotations.CreationTimestamp;
 

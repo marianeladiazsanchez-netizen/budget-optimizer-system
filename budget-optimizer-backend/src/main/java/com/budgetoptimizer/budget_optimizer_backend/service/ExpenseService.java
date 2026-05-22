@@ -39,28 +39,21 @@ public class ExpenseService {
     // ==========================================
     // CREAR GASTO
     // ==========================================
-
     public ExpenseResponseDTO createExpense(ExpenseDTO dto) {
 
-        log.info("Creando gasto para usuario {}", dto.getUsuarioId());
-
         Usuario usuario = usuarioRepo.findById(dto.getUsuarioId())
-                .orElseThrow(() ->
-                        new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
         Presupuesto presupuesto = presupuestoRepo.findById(dto.getPresupuestoId())
-                .orElseThrow(() ->
-                        new RuntimeException("Presupuesto no encontrado"));
+                .orElseThrow(() -> new RuntimeException("Presupuesto no encontrado"));
 
         Categoria categoria = categoriaRepo.findById(dto.getCategoriaId())
-                .orElseThrow(() ->
-                        new RuntimeException("Categoría no encontrada"));
+                .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
 
         Empresa empresa = null;
 
         if (dto.getEmpresaId() != null) {
-            empresa = empresaRepo.findById(dto.getEmpresaId())
-                    .orElse(null);
+            empresa = empresaRepo.findById(dto.getEmpresaId()).orElse(null);
         }
 
         Expense expense = Expense.builder()
@@ -70,31 +63,19 @@ public class ExpenseService {
                 .empresa(empresa)
                 .descripcion(dto.getDescripcion())
                 .monto(dto.getMonto())
-                .fechaGasto(
-                        dto.getFechaGasto() != null
-                                ? dto.getFechaGasto()
-                                : LocalDateTime.now()
-                )
-                .metodoPago(
-                        dto.getMetodoPago() != null
-                                ? dto.getMetodoPago()
-                                : PaymentMethod.CASH
-                )
+                .fechaGasto(dto.getFechaGasto() != null ? dto.getFechaGasto() : LocalDateTime.now())
+                .metodoPago(dto.getMetodoPago() != null ? dto.getMetodoPago() : PaymentMethod.CASH)
                 .notas(dto.getNotas())
                 .build();
 
-        Expense savedExpense = expenseRepo.save(expense);
-
-        return convertirAResponse(savedExpense);
+        return convertirAResponse(expenseRepo.save(expense));
     }
 
     // ==========================================
-    // OBTENER TODOS LOS GASTOS DE UN USUARIO
+    // GASTOS POR USUARIO
     // ==========================================
-
     @Transactional(readOnly = true)
     public List<ExpenseResponseDTO> getExpensesByUsuario(Long usuarioId) {
-
         return expenseRepo.findByUsuarioIdOrderByFechaGastoDesc(usuarioId)
                 .stream()
                 .map(this::convertirAResponse)
@@ -102,38 +83,73 @@ public class ExpenseService {
     }
 
     // ==========================================
-    // OBTENER GASTO POR ID
+    // GASTOS POR PRESUPUESTO
     // ==========================================
+    @Transactional(readOnly = true)
+    public List<ExpenseResponseDTO> getExpensesByPresupuesto(Long presupuestoId) {
+        return expenseRepo.findByPresupuestoIdOrderByFechaGastoDesc(presupuestoId)
+                .stream()
+                .map(this::convertirAResponse)
+                .collect(Collectors.toList());
+    }
 
+    // ==========================================
+    // GASTOS POR USUARIO Y RANGO DE FECHAS
+    // ==========================================
+    @Transactional(readOnly = true)
+    public List<ExpenseResponseDTO> getExpensesByUsuarioAndDateRange(
+            Long usuarioId,
+            LocalDateTime start,
+            LocalDateTime end) {
+
+        return expenseRepo.findByUsuarioIdAndFechaGastoBetweenOrderByFechaGastoDesc(
+                        usuarioId, start, end)
+                .stream()
+                .map(this::convertirAResponse)
+                .collect(Collectors.toList());
+    }
+
+    // ==========================================
+    // GASTOS POR PRESUPUESTO Y CATEGORÍA
+    // ==========================================
+    @Transactional(readOnly = true)
+    public List<ExpenseResponseDTO> getExpensesByPresupuestoAndCategoria(
+            Long presupuestoId,
+            Long categoriaId) {
+
+        return expenseRepo.findByPresupuestoIdAndCategoriaIdOrderByFechaGastoDesc(
+                        presupuestoId, categoriaId)
+                .stream()
+                .map(this::convertirAResponse)
+                .collect(Collectors.toList());
+    }
+
+    // ==========================================
+    // OBTENER POR ID
+    // ==========================================
     @Transactional(readOnly = true)
     public ExpenseResponseDTO getExpenseById(Long id) {
-
         Expense expense = expenseRepo.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Gasto no encontrado"));
+                .orElseThrow(() -> new RuntimeException("Gasto no encontrado"));
 
         return convertirAResponse(expense);
     }
 
     // ==========================================
-    // ACTUALIZAR GASTO
+    // ACTUALIZAR
     // ==========================================
-
     public ExpenseResponseDTO updateExpense(Long id, ExpenseDTO dto) {
 
         Expense expense = expenseRepo.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Gasto no encontrado"));
+                .orElseThrow(() -> new RuntimeException("Gasto no encontrado"));
 
         Categoria categoria = categoriaRepo.findById(dto.getCategoriaId())
-                .orElseThrow(() ->
-                        new RuntimeException("Categoría no encontrada"));
+                .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
 
         Empresa empresa = null;
 
         if (dto.getEmpresaId() != null) {
-            empresa = empresaRepo.findById(dto.getEmpresaId())
-                    .orElse(null);
+            empresa = empresaRepo.findById(dto.getEmpresaId()).orElse(null);
         }
 
         expense.setDescripcion(dto.getDescripcion());
@@ -141,54 +157,38 @@ public class ExpenseService {
         expense.setCategoria(categoria);
         expense.setEmpresa(empresa);
         expense.setFechaGasto(dto.getFechaGasto());
-
-        if (dto.getMetodoPago() != null) {
-            expense.setMetodoPago(dto.getMetodoPago());
-        }
-
+        expense.setMetodoPago(dto.getMetodoPago());
         expense.setNotas(dto.getNotas());
 
-        Expense updated = expenseRepo.save(expense);
-
-        return convertirAResponse(updated);
+        return convertirAResponse(expenseRepo.save(expense));
     }
 
     // ==========================================
-    // ELIMINAR GASTO
+    // ELIMINAR
     // ==========================================
-
     public void deleteExpense(Long id) {
-
         Expense expense = expenseRepo.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Gasto no encontrado"));
+                .orElseThrow(() -> new RuntimeException("Gasto no encontrado"));
 
         expenseRepo.delete(expense);
     }
 
     // ==========================================
-    // CONVERTIR ENTITY -> DTO
+    // MAPPER
     // ==========================================
-
     private ExpenseResponseDTO convertirAResponse(Expense expense) {
-
         return ExpenseResponseDTO.builder()
                 .id(expense.getId())
                 .descripcion(expense.getDescripcion())
                 .monto(expense.getMonto())
                 .fechaGasto(expense.getFechaGasto())
-
                 .usuarioId(expense.getUsuario().getId())
                 .usuarioNombre(expense.getUsuario().getNombre())
-
                 .categoriaId(expense.getCategoria().getId())
                 .categoriaNombre(expense.getCategoria().getNombre())
-
                 .presupuestoId(expense.getPresupuesto().getId())
                 .presupuestoNombre(expense.getPresupuesto().getNombre())
-
                 .fechaCreacion(expense.getFechaCreacion())
-
                 .build();
     }
 }

@@ -23,7 +23,7 @@ services:
   backend:
     build: 
       context: ./budget-optimizer-backend
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
     container_name: budget-optimizer-backend-dev
     environment:
       # Configuración de Spring

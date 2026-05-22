@@ -1,32 +1,26 @@
-# Etapa de construcción
 FROM maven:3.9.6-eclipse-temurin-21 AS build
 
-# Establecer el directorio de trabajo
 WORKDIR /app
 
-# Copiar el archivo POM
 COPY pom.xml .
-
-# Descargar dependencias
 RUN mvn dependency:go-offline
 
-# Copiar los archivos fuente
 COPY src ./src
 
-# Empaquetar la aplicación
 RUN mvn clean package -DskipTests
 
-# Etapa de ejecución
+# Verificar jars generados
+RUN ls -lah target
+
+# Copiar el jar correcto a un nombre fijo
+RUN find target -name "*.jar" ! -name "*.original" -exec cp {} target/app.jar \;
+
 FROM eclipse-temurin:21-jre-jammy
 
-# Establecer el directorio de trabajo
 WORKDIR /app
 
-# Copiar el JAR desde la etapa de construcción
-COPY --from=build /app/target/budget-optimizer-backend-0.0.1-SNAPSHOT.jar app.jar
+COPY --from=build /app/target/app.jar /app/app.jar
 
-# Puerto expuesto
 EXPOSE 8080
 
-# Comando para ejecutar la aplicación
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]

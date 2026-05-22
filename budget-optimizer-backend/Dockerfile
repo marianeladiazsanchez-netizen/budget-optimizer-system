@@ -13,7 +13,9 @@ RUN mvn clean package -DskipTests
 RUN ls -lah target
 
 # Copiar el jar correcto a un nombre fijo
-RUN find target -name "*.jar" ! -name "*.original" -exec cp {} target/app.jar \;
+RUN cp target/budget-optimizer-backend-0.0.1-SNAPSHOT.jar target/app.jar
+
+RUN ls -lah target
 
 FROM eclipse-temurin:21-jre-jammy
 

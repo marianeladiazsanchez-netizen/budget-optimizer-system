@@ -108,13 +108,14 @@ public class PresupuestoMLService {
                 DateTimeFormatter.ofPattern("yyyy-MM");
 
         List<GastoHistorico> gastosHistoricos = gastos.stream()
-                .map(gasto -> GastoHistorico.builder()
-                        .categoria(gasto.getCategoria().getNombre())
-                        .monto(monto: gasto.getMonto())
-                        .mes(gasto.getFechaGasto().format(formatter))
-                        .fecha(gasto.getFechaGasto().toString())
-                        .build())
-                .collect(Collectors.toList());
+        .map(gasto -> GastoHistorico.builder()
+                .categoria(gasto.getCategoria().getNombre())
+                .monto(gasto.getMonto().doubleValue())
+                .mes(gasto.getFechaGasto().format(formatter))
+                .fecha(gasto.getFechaGasto().toString())
+                .build()
+        )
+        .collect(Collectors.toList());
 
         PrediccionGastosRequest request =
                 PrediccionGastosRequest.builder()

@@ -69,7 +69,7 @@ public interface PresupuestoRepository extends JpaRepository<Presupuesto, Long> 
             LocalDateTime fin
     );
 
-    Optional<Presupuesto> findFirstByUsuarioIdAndStatusOrderByFechaCreacionDesc(
+    List<Presupuesto> findFirstByUsuarioIdAndStatusOrderByFechaCreacionDesc(
         Long usuarioId,
         BudgetStatus status
     );

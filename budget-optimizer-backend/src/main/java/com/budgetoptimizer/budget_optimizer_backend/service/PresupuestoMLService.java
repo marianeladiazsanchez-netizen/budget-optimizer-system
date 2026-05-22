@@ -113,8 +113,7 @@ public class PresupuestoMLService {
                 .monto(gasto.getMonto().doubleValue())
                 .mes(gasto.getFechaGasto().format(formatter))
                 .fecha(gasto.getFechaGasto().toString())
-                .build()
-        )
+                .build())
         .collect(Collectors.toList());
 
         PrediccionGastosRequest request =

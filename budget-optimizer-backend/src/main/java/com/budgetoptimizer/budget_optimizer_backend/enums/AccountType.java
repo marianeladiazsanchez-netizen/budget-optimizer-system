@@ -132,10 +132,10 @@ public enum AccountType {
 
     BigDecimal porcentajeDescuento =
             descuentoPorcentaje.divide(
-                    BigDecimal.valueOf(100)
+                    BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP
             );
 
-          return montoOriginal.multiply(BigDecimal.ONE.subtract(porcentaje));  
+          return montoOriginal.multiply(BigDecimal.ONE.subtract(porcentajeDescuento));  
     }
     
     /**
@@ -147,7 +147,7 @@ public enum AccountType {
         return BigDecimal.ZERO;
     }
 
-    return montoOriginal.multiply(descuentoPorcentaje.divide(BigDecimal.valueOf(100))); 
+    return montoOriginal.multiply(descuentoPorcentaje.divide(BigDecimal.valueOf(100),2,RoundingMode.HALF_UP)); 
     }
     
     /**
@@ -280,7 +280,7 @@ public enum AccountType {
     public String getDescripcionCompleta() {
         return String.format(
             "%s %s - %s\n" +
-            "• Descuento: %.1f%%\n" +
+            "• Descuento: %s%%\n" +
             "• Límite transacciones: %d/mes\n" +
             "• Nivel de acceso: %d\n" +
             "• Beneficios premium: %s\n" +
@@ -318,7 +318,7 @@ public enum AccountType {
      * Obtiene el tipo de cuenta recomendado según gasto mensual
      */
     public static AccountType recomendarSegunGasto(BigDecimal gastoMensual) {
-        if (gastoMensual.compareTo(BigDecimal.valueOf(BigDecimal.ZERO)) <= 0) {
+        if (gastoMensual.compareTo(BigDecimal.ZERO) <= 0) {
             return USER;
         }
         

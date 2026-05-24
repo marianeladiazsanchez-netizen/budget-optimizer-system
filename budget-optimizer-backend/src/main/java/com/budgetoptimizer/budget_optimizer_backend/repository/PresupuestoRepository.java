@@ -24,7 +24,7 @@ public interface PresupuestoRepository extends JpaRepository<Presupuesto, Long> 
 
     List<Presupuesto> findByUsuario_IdOrderByFechaCreacionDesc(Long usuarioId);
 
-    List<Presupuesto> findByUsuarioIdAndStatus(
+    List<Presupuesto> findByUsuario_IdAndStatus(
             Long usuarioId,
             BudgetStatus status
     );

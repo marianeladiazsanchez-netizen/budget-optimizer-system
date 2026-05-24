@@ -64,7 +64,7 @@ public class PresupuestoService {
     // ==========================================
 
     public List<PresupuestoResponseDTO> listarPorUsuarioYEstado(Long usuarioId, BudgetStatus status) {
-    return presupuestoRepo.findByUsuarioIdAndStatus(usuarioId, status)
+    return presupuestoRepo.findByUsuario_ IdAndStatus(usuarioId, status)
             .stream()
             .map(this::convertirAResponse)
             .toList();
@@ -72,7 +72,7 @@ public class PresupuestoService {
 
 public PresupuestoResponseDTO buscarPresupuestoActual(Long usuarioId) {
     return convertirAResponse(
-            presupuestoRepo.findFirstByUsuarioIdAndStatusOrderByFechaCreacionDesc(usuarioId, BudgetStatus.ACTIVE)
+            presupuestoRepo.findFirstByUsuario_IdAndStatusOrderByFechaCreacionDesc(usuarioId, BudgetStatus.ACTIVE)
             .orElseThrow(() -> new RuntimeException("No hay presupuesto activo"))
         );
 }
@@ -122,7 +122,7 @@ public void eliminarPresupuesto(Long id) {
     }
 
     public List<PresupuestoResponseDTO> listarPorUsuario(Long usuarioId) {
-        return presupuestoRepo.findByUsuarioIdOrderByFechaCreacionDesc(usuarioId)
+        return presupuestoRepo.findByUsuario_IdOrderByFechaCreacionDesc(usuarioId)
                 .stream()
                 .map(this::convertirAResponse)
                 .toList();

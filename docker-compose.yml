@@ -37,7 +37,7 @@ services:
       # JPA/Hibernate
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_JPA_SHOW_SQL: "true"
-      ML_SERVICE_URL: http://ml-service:8000
+      
       
       # Logging
       LOG_LEVEL: ${LOG_LEVEL:-INFO}

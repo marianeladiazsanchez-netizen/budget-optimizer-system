@@ -16,19 +16,19 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     // CONSULTAS POR EMPRESA
     // ==========================================
 
-    List<Review> findByEmpresaId(String empresaId);
+    List<Review> findByEmpresa_Id(String empresaId);
 
-    List<Review> findByEmpresaIdAndVerificadaTrue(String empresaId);
+    List<Review> findByEmpresa_IdAndVerificadaTrue(String empresaId);
 
-    long countByEmpresaId(String empresaId);
+    long countByEmpresa_Id(String empresaId);
 
-    long countByEmpresaIdAndVerificadaTrue(String empresaId);
+    long countByEmpresa_IdAndVerificadaTrue(String empresaId);
 
     // ==========================================
     // CONSULTAS POR USUARIO
     // ==========================================
 
-    List<Review> findByUsuarioId(Long usuarioId);
+    List<Review> findByUsuario_Id(Long usuarioId);
 
     // ==========================================
     // CONSULTAS POR CALIFICACIÓN

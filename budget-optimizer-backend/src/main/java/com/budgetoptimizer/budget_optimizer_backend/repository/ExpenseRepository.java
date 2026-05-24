@@ -27,13 +27,13 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
             LocalDateTime fin
     );
 
-    List<Expense> findByUsuarioIdAndCategoriaId(Long usuarioId, Long categoriaId);
+    List<Expense> findByUsuario_IdAndCategoria_Id(Long usuarioId, Long categoriaId);
 
-    List<Expense> findByUsuario_IdAndEmpresa_Id(String usuarioId, String empresaId);
+    List<Expense> findByUsuario_IdAndEmpresa_Id(Long usuarioId, Long empresaId);
 
-    List<Expense> findByUsuarioIdAndMetodoPago(Long usuarioId, PaymentMethod metodoPago);
+    List<Expense> findByUsuario_IdAndMetodoPago(Long usuarioId, PaymentMethod metodoPago);
 
-    List<Expense> findByUsuarioIdAndDescripcionContainingIgnoreCase(Long usuarioId, String keyword);
+    List<Expense> findByUsuario_IdAndDescripcionContainingIgnoreCase(Long usuarioId, String keyword);
 
     // ==========================================
     // PRESUPUESTO

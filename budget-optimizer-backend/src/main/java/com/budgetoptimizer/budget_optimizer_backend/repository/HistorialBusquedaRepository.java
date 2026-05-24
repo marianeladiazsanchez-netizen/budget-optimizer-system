@@ -13,9 +13,9 @@ public interface HistorialBusquedaRepository
     // CONSULTAS POR USUARIO
     // ==========================================
 
-    List<HistorialBusqueda> findByUsuarioId(Long usuarioId);
+    List<HistorialBusqueda> findByUsuario_Id(Long usuarioId);
 
-    List<HistorialBusqueda> findByUsuarioIdOrderByFechaDesc(Long usuarioId);
+    List<HistorialBusqueda> findByUsuario_IdOrderByFechaDesc(Long usuarioId);
 
-    List<HistorialBusqueda> findTop10ByUsuarioIdOrderByFechaDesc(Long usuarioId);
+    List<HistorialBusqueda> findTop10ByUsuario_IdOrderByFechaDesc(Long usuarioId);
 }

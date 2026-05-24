@@ -16,16 +16,16 @@ public interface CategoryLimitRepository extends JpaRepository<CategoryLimit, Lo
     // CONSULTAS BÁSICAS
     // ==========================================
 
-    List<CategoryLimit> findByPresupuestoId(Long presupuestoId);
+    List<CategoryLimit> findByPresupuesto_Id(Long presupuestoId);
 
-    List<CategoryLimit> findByCategoriaId(Long categoriaId);
+    List<CategoryLimit> findByCategoria_Id(Long categoriaId);
 
-    Optional<CategoryLimit> findByPresupuestoIdAndCategoriaId(
+    Optional<CategoryLimit> findByPresupuesto_IdAndCategoria_Id(
             Long presupuestoId,
             Long categoriaId
     );
 
-    boolean existsByPresupuestoIdAndCategoriaId(
+    boolean existsByPresupuesto_IdAndCategoria_Id(
             Long presupuestoId,
             Long categoriaId
     );

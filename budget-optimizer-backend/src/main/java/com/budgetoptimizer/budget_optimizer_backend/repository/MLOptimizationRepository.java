@@ -7,8 +7,8 @@ import java.util.List;
 
 @Repository
 public interface MLOptimizationRepository extends JpaRepository<MLOptimization, Long> {
-    List<MLOptimization> findByUsuarioId(Long usuarioId);
-    List<MLOptimization> findByUsuarioIdAndTipo(Long usuarioId, OptimizationType tipo);
-    List<MLOptimization> findByUsuarioIdAndAplicadaFalse(Long usuarioId);
-    List<MLOptimization> findByPresupuestoId(Long presupuestoId);
+    List<MLOptimization> findByUsuario_Id(Long usuarioId);
+    List<MLOptimization> findByUsuario_IdAndTipo(Long usuarioId, OptimizationType tipo);
+    List<MLOptimization> findByUsuario_IdAndAplicadaFalse(Long usuarioId);
+    List<MLOptimization> findByPresupuesto_Id(Long presupuestoId);
 }

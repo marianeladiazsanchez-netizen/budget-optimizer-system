@@ -20,18 +20,18 @@ public interface PresupuestoRepository extends JpaRepository<Presupuesto, Long> 
     // CONSULTAS POR USUARIO
     // ==========================================
 
-    List<Presupuesto> findByUsuarioId(Long usuarioId);
+    List<Presupuesto> findByUsuario_Id(Long usuarioId);
 
-    List<Presupuesto> findByUsuarioIdOrderByFechaCreacionDesc(Long usuarioId);
+    List<Presupuesto> findByUsuario_IdOrderByFechaCreacionDesc(Long usuarioId);
 
-    List<Presupuesto> findByUsuarioIdAndStatus(
+    List<Presupuesto> findByUsuario_IdAndStatus(
             Long usuarioId,
             BudgetStatus status
     );
 
-    long countByUsuarioId(Long usuarioId);
+    long countByUsuario_Id(Long usuarioId);
 
-    boolean existsByUsuarioId(Long usuarioId);
+    boolean existsByUsuario_Id(Long usuarioId);
 
     // ==========================================
     // CONSULTAS POR ESTADO
@@ -69,7 +69,7 @@ public interface PresupuestoRepository extends JpaRepository<Presupuesto, Long> 
             LocalDateTime fin
     );
 
-    Optional<Presupuesto> findFirstByUsuarioIdAndStatusOrderByFechaCreacionDesc(
+    Optional<Presupuesto> findFirstByUsuario_IdAndStatusOrderByFechaCreacionDesc(
         Long usuarioId,
         BudgetStatus status
     );

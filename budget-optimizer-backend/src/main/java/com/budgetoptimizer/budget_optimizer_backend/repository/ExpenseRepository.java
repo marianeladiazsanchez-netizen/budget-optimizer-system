@@ -17,7 +17,7 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
     // ==========================================
     // USUARIO
     // ==========================================
-    List<Expense> findByUsuario_Id(Long usuarioId);
+    List<Expense> findByUsuarioId(Long usuarioId);
 
     List<Expense> findByUsuarioIdOrderByFechaGastoDesc(Long usuarioId);
 
@@ -27,13 +27,13 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
             LocalDateTime fin
     );
 
-    List<Expense> findByUsuario_IdAndCategoria_Id(Long usuarioId, Long categoriaId);
+    List<Expense> findByUsuarioIdAndCategoria_Id(Long usuarioId, Long categoriaId);
 
-    List<Expense> findByUsuario_IdAndEmpresa_Id(Long usuarioId, Long empresaId);
+    List<Expense> findByUsuarioIdAndEmpresa_Id(Long usuarioId, Long empresaId);
 
-    List<Expense> findByUsuario_IdAndMetodo_Pago(Long usuarioId, PaymentMethod metodoPago);
+    List<Expense> findByUsuarioIdAndMetodo_Pago(Long usuarioId, PaymentMethod metodoPago);
 
-    List<Expense> findByUsuario_IdAndDescripcionContainingIgnoreCase(Long usuarioId, String keyword);
+    List<Expense> findByUsuarioIdAndDescripcionContainingIgnoreCase(Long usuarioId, String keyword);
 
     // ==========================================
     // PRESUPUESTO

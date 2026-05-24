@@ -41,19 +41,19 @@ public class ExpenseService {
     // ==========================================
     public ExpenseResponseDTO createExpense(ExpenseDTO dto) {
 
-        Usuario usuario = usuarioRepo.findById(dto.getUsuario_Id())
+        Usuario usuario = usuarioRepo.findById(dto.getUsuarioId())
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        Presupuesto presupuesto = presupuestoRepo.findById(dto.getPresupuesto_Id())
+        Presupuesto presupuesto = presupuestoRepo.findById(dto.getPresupuestoId())
                 .orElseThrow(() -> new RuntimeException("Presupuesto no encontrado"));
 
-        Categoria categoria = categoriaRepo.findById(dto.getCategoria_Id())
+        Categoria categoria = categoriaRepo.findById(dto.getCategoriaId())
                 .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
 
         Empresa empresa = null;
 
         if (dto.getEmpresaId() != null) {
-            empresa = empresaRepo.findById(dto.getEmpresa_Id()).orElse(null);
+            empresa = empresaRepo.findById(dto.getEmpresaId()).orElse(null);
         }
 
         Expense expense = Expense.builder()

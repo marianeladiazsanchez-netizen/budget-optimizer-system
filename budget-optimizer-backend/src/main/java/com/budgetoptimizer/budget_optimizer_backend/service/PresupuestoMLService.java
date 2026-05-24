@@ -42,7 +42,7 @@ public class PresupuestoMLService {
 
         Usuario usuario = presupuesto.getUsuario();
 
-        List<Expense> gastos = expenseRepository.findByPresupuestoId(presupuestoId);
+        List<Expense> gastos = expenseRepository.findByPresupuesto_Id(presupuestoId);
 
         String prompt = construirPromptAnalisis(
                 presupuesto,
@@ -96,7 +96,7 @@ public class PresupuestoMLService {
                 mesesAdelante
         );
 
-        List<Expense> gastos = expenseRepository.findByUsuarioId(usuarioId);
+        List<Expense> gastos = expenseRepository.findByUsuario_Id(usuarioId);
 
         if (gastos == null || gastos.isEmpty()) {
             throw new RuntimeException(
@@ -177,7 +177,7 @@ public class PresupuestoMLService {
                         ));
 
         List<Expense> gastos =
-                expenseRepository.findByPresupuestoId(presupuestoId);
+                expenseRepository.findByPresupuesto_Id(presupuestoId);
 
         List<String> categorias = gastos.stream()
                 .map(g -> g.getCategoria().getNombre())
@@ -241,7 +241,7 @@ public class PresupuestoMLService {
         );
 
         List<Expense> gastos =
-                expenseRepository.findByUsuarioId(usuarioId);
+                expenseRepository.findByUsuario_Id(usuarioId);
 
         if (gastos == null || gastos.isEmpty()) {
             throw new RuntimeException(

@@ -41,19 +41,19 @@ public class ExpenseService {
     // ==========================================
     public ExpenseResponseDTO createExpense(ExpenseDTO dto) {
 
-        Usuario usuario = usuarioRepo.findById(dto.getUsuarioId())
+        Usuario usuario = usuarioRepo.findById(dto.getUsuario_Id())
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        Presupuesto presupuesto = presupuestoRepo.findById(dto.getPresupuestoId())
+        Presupuesto presupuesto = presupuestoRepo.findById(dto.getPresupuesto_Id())
                 .orElseThrow(() -> new RuntimeException("Presupuesto no encontrado"));
 
-        Categoria categoria = categoriaRepo.findById(dto.getCategoriaId())
+        Categoria categoria = categoriaRepo.findById(dto.getCategoria_Id())
                 .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
 
         Empresa empresa = null;
 
         if (dto.getEmpresaId() != null) {
-            empresa = empresaRepo.findById(dto.getEmpresaId()).orElse(null);
+            empresa = empresaRepo.findById(dto.getEmpresa_Id()).orElse(null);
         }
 
         Expense expense = Expense.builder()
@@ -76,7 +76,7 @@ public class ExpenseService {
     // ==========================================
     @Transactional(readOnly = true)
     public List<ExpenseResponseDTO> getExpensesByUsuario(Long usuarioId) {
-        return expenseRepo.findByUsuarioIdOrderByFechaGastoDesc(usuarioId)
+        return expenseRepo.findByUsuario_IdOrderByFechaGastoDesc(usuarioId)
                 .stream()
                 .map(this::convertirAResponse)
                 .collect(Collectors.toList());
@@ -87,7 +87,7 @@ public class ExpenseService {
     // ==========================================
     @Transactional(readOnly = true)
     public List<ExpenseResponseDTO> getExpensesByPresupuesto(Long presupuestoId) {
-        return expenseRepo.findByPresupuestoIdOrderByFechaGastoDesc(presupuestoId)
+        return expenseRepo.findByPresupuesto_IdOrderByFechaGastoDesc(presupuestoId)
                 .stream()
                 .map(this::convertirAResponse)
                 .collect(Collectors.toList());
@@ -102,7 +102,7 @@ public class ExpenseService {
             LocalDateTime start,
             LocalDateTime end) {
 
-        return expenseRepo.findByUsuarioIdAndFechaGastoBetweenOrderByFechaGastoDesc(
+        return expenseRepo.findByUsuario_IdAndFechaGastoBetweenOrderByFechaGastoDesc(
                         usuarioId, start, end)
                 .stream()
                 .map(this::convertirAResponse)
@@ -117,7 +117,7 @@ public class ExpenseService {
             Long presupuestoId,
             Long categoriaId) {
 
-        return expenseRepo.findByPresupuestoIdAndCategoriaIdOrderByFechaGastoDesc(
+        return expenseRepo.findByPresupuesto_IdAndCategoriaIdOrderByFechaGastoDesc(
                         presupuestoId, categoriaId)
                 .stream()
                 .map(this::convertirAResponse)
@@ -143,13 +143,13 @@ public class ExpenseService {
         Expense expense = expenseRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Gasto no encontrado"));
 
-        Categoria categoria = categoriaRepo.findById(dto.getCategoriaId())
+        Categoria categoria = categoriaRepo.findById(dto.getCategoria_Id())
                 .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
 
         Empresa empresa = null;
 
-        if (dto.getEmpresaId() != null) {
-            empresa = empresaRepo.findById(dto.getEmpresaId()).orElse(null);
+        if (dto.getEmpresa_Id() != null) {
+            empresa = empresaRepo.findById(dto.getEmpresa_Id()).orElse(null);
         }
 
         expense.setDescripcion(dto.getDescripcion());

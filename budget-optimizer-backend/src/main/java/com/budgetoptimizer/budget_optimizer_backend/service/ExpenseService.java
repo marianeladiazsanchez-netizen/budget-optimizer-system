@@ -117,7 +117,7 @@ public class ExpenseService {
             Long presupuestoId,
             Long categoriaId) {
 
-        return expenseRepo.findByPresupuesto_IdAndCategoriaIdOrderByFechaGastoDesc(
+        return expenseRepo.findByPresupuesto_IdAndCategoria_IdOrderByFechaGastoDesc(
                         presupuestoId, categoriaId)
                 .stream()
                 .map(this::convertirAResponse)

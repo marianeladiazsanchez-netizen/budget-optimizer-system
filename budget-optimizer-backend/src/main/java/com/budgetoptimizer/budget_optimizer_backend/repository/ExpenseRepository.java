@@ -17,37 +17,37 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
     // ==========================================
     // USUARIO
     // ==========================================
-    List<Expense> findByUsuarioId(Long usuarioId);
+    List<Expense> findByUsuario_Id(Long usuarioId);
 
-    List<Expense> findByUsuarioIdOrderByFechaGastoDesc(Long usuarioId);
+    List<Expense> findByUsuario_IdOrderByFechaGastoDesc(Long usuarioId);
 
-    List<Expense> findByUsuarioIdAndFechaGastoBetweenOrderByFechaGastoDesc(
+    List<Expense> findByUsuario_IdAndFechaGastoBetweenOrderByFechaGastoDesc(
             Long usuarioId,
             LocalDateTime inicio,
             LocalDateTime fin
     );
 
-    List<Expense> findByUsuarioIdAndCategoriaId(Long usuarioId, Long categoriaId);
+    List<Expense> findByUsuario_IdAndCategoriaId(Long usuarioId, Long categoriaId);
 
-    List<Expense> findByUsuarioIdAndEmpresaId(Long usuarioId, Long empresaId);
+    List<Expense> findByUsuario_IdAndEmpresaId(Long usuarioId, Long empresaId);
 
-    List<Expense> findByUsuarioIdAndMetodoPago(Long usuarioId, PaymentMethod metodoPago);
+    List<Expense> findByUsuario_IdAndMetodoPago(Long usuarioId, PaymentMethod metodoPago);
 
-    List<Expense> findByUsuarioIdAndDescripcionContainingIgnoreCase(Long usuarioId, String keyword);
+    List<Expense> findByUsuario_IdAndDescripcionContainingIgnoreCase(Long usuarioId, String keyword);
 
     // ==========================================
     // PRESUPUESTO
     // ==========================================
-    List<Expense> findByPresupuestoId(Long presupuestoId);
+    List<Expense> findByPresupuesto_Id(Long presupuestoId);
 
-    List<Expense> findByPresupuestoIdOrderByFechaGastoDesc(Long presupuestoId);
+    List<Expense> findByPresupuesto_IdOrderByFechaGastoDesc(Long presupuestoId);
 
-    List<Expense> findByPresupuestoIdAndCategoriaIdOrderByFechaGastoDesc(
+    List<Expense> findByPresupuesto_IdAndCategoria_IdOrderByFechaGastoDesc(
             Long presupuestoId,
             Long categoriaId
     );
 
-    List<Expense> findByPresupuestoIdAndFechaGastoBetween(
+    List<Expense> findByPresupuesto_IdAndFechaGastoBetween(
             Long presupuestoId,
             LocalDateTime inicio,
             LocalDateTime fin
@@ -56,12 +56,12 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
     // ==========================================
     // CATEGORÍA
     // ==========================================
-    List<Expense> findByCategoriaId(Long categoriaId);
+    List<Expense> findByCategoria_Id(Long categoriaId);
 
     // ==========================================
     // EMPRESA (FIX: Long, no String)
     // ==========================================
-    List<Expense> findByEmpresaId(Long empresaId);
+    List<Expense> findByEmpresa_Id(Long empresaId);
 
     // ==========================================
     // MÉTODO DE PAGO
@@ -80,7 +80,7 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
 
     List<Expense> findByMontoBetween(BigDecimal min, BigDecimal max);
 
-    List<Expense> findTop10ByUsuarioIdOrderByMontoDesc(Long usuarioId);
+    List<Expense> findTop10ByUsuario_IdOrderByMontoDesc(Long usuarioId);
 
     // ==========================================
     // DESCRIPCIÓN
@@ -95,14 +95,14 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
         FROM Expense e
         WHERE e.presupuesto.id = :presupuestoId
     """)
-    BigDecimal sumMontoByPresupuestoId(@Param("presupuestoId") Long presupuestoId);
+    BigDecimal sumMontoByPresupuesto_Id(@Param("presupuestoId") Long presupuestoId);
 
     @Query("""
         SELECT COALESCE(SUM(e.monto), 0)
         FROM Expense e
         WHERE e.categoria.id = :categoriaId
     """)
-    BigDecimal sumMontoByCategoriaId(@Param("categoriaId") Long categoriaId);
+    BigDecimal sumMontoByCategoria_Id(@Param("categoriaId") Long categoriaId);
 
     @Query("""
         SELECT e.categoria.nombre, SUM(e.monto)

@@ -37,6 +37,7 @@ services:
       # JPA/Hibernate
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_JPA_SHOW_SQL: "true"
+      ML_SERVICE_URL: http://ml-service:8000
       
       # Logging
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
@@ -70,11 +71,11 @@ services:
       - /app/node_modules
     environment:
       - NODE_ENV=development
-      - VITE_API_URL=http://localhost:8000
+      - VITE_API_URL=http://localhost:8080
     ports:
       - "${FRONTEND_PORT}:5173"
     depends_on:
-      - ml-service
+      - backend
     networks:
       - budget-network
 

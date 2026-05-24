@@ -87,7 +87,7 @@ public class ExpenseService {
     // ==========================================
     @Transactional(readOnly = true)
     public List<ExpenseResponseDTO> getExpensesByPresupuesto(Long presupuestoId) {
-        return expenseRepo.findByPresupuesto_IdOrderByFechaGastoDesc(presupuestoId)
+        return expenseRepo.findByPresupuestoIdOrderByFechaGastoDesc(presupuestoId)
                 .stream()
                 .map(this::convertirAResponse)
                 .collect(Collectors.toList());
@@ -102,7 +102,7 @@ public class ExpenseService {
             LocalDateTime start,
             LocalDateTime end) {
 
-        return expenseRepo.findByUsuario_IdAndFechaGastoBetweenOrderByFechaGastoDesc(
+        return expenseRepo.findByUsuarioIdAndFechaGastoBetweenOrderByFechaGastoDesc(
                         usuarioId, start, end)
                 .stream()
                 .map(this::convertirAResponse)
@@ -117,7 +117,7 @@ public class ExpenseService {
             Long presupuestoId,
             Long categoriaId) {
 
-        return expenseRepo.findByPresupuesto_IdAndCategoriaIdOrderByFechaGastoDesc(
+        return expenseRepo.findByPresupuestoIdAndCategoriaIdOrderByFechaGastoDesc(
                         presupuestoId, categoriaId)
                 .stream()
                 .map(this::convertirAResponse)

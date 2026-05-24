@@ -16,7 +16,7 @@ public interface CuentaRepository extends JpaRepository<Cuenta, Long> {
     // BÚSQUEDAS BÁSICAS
     // ==========================================
 
-    Optional<Cuenta> findByUsuario_Id(Long usuarioId);
+    Optional<Cuenta> findByUsuarioId(Long usuarioId);
 
     List<Cuenta> findByTipoCuenta(AccountType tipoCuenta);
 
@@ -26,5 +26,5 @@ public interface CuentaRepository extends JpaRepository<Cuenta, Long> {
 
     List<Cuenta> findBySaldoGreaterThanEqual(BigDecimal saldo);
 
-    boolean existsByUsuario_Id(Long usuarioId);
+    boolean existsByUsuarioId(Long usuarioId);
 }

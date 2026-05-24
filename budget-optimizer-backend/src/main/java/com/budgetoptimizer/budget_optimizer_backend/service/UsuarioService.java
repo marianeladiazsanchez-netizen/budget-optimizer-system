@@ -288,7 +288,7 @@ public class UsuarioService {
         usuario.upgradeCuenta(nuevoTipo);
 
         // Actualizar cuenta asociada
-        Cuenta cuenta = cuentaRepo.findByUsuario_Id(id)
+        Cuenta cuenta = cuentaRepo.findByUsuarioId(id)
                 .orElseThrow(() ->
                         new RuntimeException("Cuenta no encontrada"));
 

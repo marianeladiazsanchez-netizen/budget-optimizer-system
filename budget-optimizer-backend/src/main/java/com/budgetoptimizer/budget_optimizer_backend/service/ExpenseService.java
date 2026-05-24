@@ -143,13 +143,13 @@ public class ExpenseService {
         Expense expense = expenseRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Gasto no encontrado"));
 
-        Categoria categoria = categoriaRepo.findById(dto.getCategoria_Id())
+        Categoria categoria = categoriaRepo.findById(dto.getCategoriaId())
                 .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
 
         Empresa empresa = null;
 
-        if (dto.getEmpresa_Id() != null) {
-            empresa = empresaRepo.findById(dto.getEmpresa_Id()).orElse(null);
+        if (dto.getEmpresaId() != null) {
+            empresa = empresaRepo.findById(dto.getEmpresaId()).orElse(null);
         }
 
         expense.setDescripcion(dto.getDescripcion());

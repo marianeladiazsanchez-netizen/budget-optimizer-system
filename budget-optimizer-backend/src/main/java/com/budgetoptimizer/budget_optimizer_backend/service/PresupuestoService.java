@@ -64,7 +64,7 @@ public class PresupuestoService {
     // ==========================================
 
     public List<PresupuestoResponseDTO> listarPorUsuarioYEstado(Long usuarioId, BudgetStatus status) {
-    return presupuestoRepo.findByUsuario_ IdAndStatus(usuarioId, status)
+    return presupuestoRepo.findByUsuario_IdAndStatus(usuarioId, status)
             .stream()
             .map(this::convertirAResponse)
             .toList();
